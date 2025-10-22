@@ -168,7 +168,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Diários (Últimos 20 Dias)";
         break;
       case "week":
-        title = "Registos Semanais (Últimas 20 Semanas)";
+        title = "Registos Semanais (20 Semanas)"; // Alterado aqui
         break;
       case "month":
         title = "Registos Mensais (Últimos 20 Meses)";
@@ -180,9 +180,6 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Anuais (Últimos 20 Anos)";
         break;
     }
-    // Removido: if (isAdjustingComparisons && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
-    // Removido:   title += " (Ajustado para Comparações)";
-    // Removido: }
     return title;
   };
 
