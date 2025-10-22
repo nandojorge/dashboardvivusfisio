@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react'; // Importar useState e useEffect
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
@@ -20,13 +20,13 @@ import {
   addYears,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
-import { cn } from "@/lib/utils"; // Importar cn para styling condicional
+// import { Toggle } from "@/components/ui/toggle"; // Removido: O Toggle será gerido externamente
+// import { cn } from "@/lib/utils"; // Removido: cn não é mais necessário aqui
 
 interface RegistrationTrendChartProps {
   contacts: Contact[];
   selectedPeriod: "today" | "week" | "month" | "year" | "all";
-  // isRealTime: boolean; // Removido: isRealTime será gerido internamente
+  isAdjustingComparisons: boolean; // Nova prop
 }
 
 // Helper function to get the real-time cutoff date for a given period's start date
@@ -54,13 +54,13 @@ const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "
   }
 };
 
-const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod }) => {
-  const [isRealTime, setIsRealTime] = useState(false); // Estado local para Tempo Real
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod, isAdjustingComparisons }) => {
+  // const [isRealTime, setIsRealTime] = useState(false); // Removido: Estado local para Tempo Real
 
   // Reset isRealTime when selectedPeriod changes
-  useEffect(() => {
-    setIsRealTime(false);
-  }, [selectedPeriod]);
+  // useEffect(() => {
+  //   setIsRealTime(false);
+  // }, [selectedPeriod]); // Removido: useEffect para resetar isRealTime
 
   const data = React.useMemo(() => {
     if (!contacts || contacts.length === 0) return [];
@@ -112,7 +112,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         if (!isNaN(date.getTime())) {
           let shouldInclude = true;
 
-          if (isRealTime && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
+          if (isAdjustingComparisons && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
             const cutoffDateForThisContactPeriod = getRealTimeCutoffDate(date, selectedPeriod, now);
 
             // Only include if the contact date is before or on the cutoff date for its period
@@ -159,7 +159,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     }
 
     return chartData;
-  }, [contacts, selectedPeriod, isRealTime]); // Adicionar isRealTime como dependência
+  }, [contacts, selectedPeriod, isAdjustingComparisons]); // Adicionar isAdjustingComparisons como dependência
 
   const getChartTitle = () => {
     let title = "Evolução Temporal dos Registos";
@@ -180,27 +180,17 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Anuais (Últimos 20 Anos)";
         break;
     }
-    if (isRealTime && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
-      title += " (Tempo Real)";
+    if (isAdjustingComparisons && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
+      title += " (Ajustado para Comparações)";
     }
     return title;
   };
 
   return (
     <Card className="col-span-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Ajustado para flex-row */}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>{getChartTitle()}</CardTitle>
-        {/* Botão "Tempo Real" visível apenas para Semana, Mês e Ano */}
-        {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
-          <Toggle
-            pressed={isRealTime}
-            onPressedChange={setIsRealTime}
-            aria-label="Toggle real-time data"
-            className={cn("ml-4", isRealTime && "bg-green-500 text-white hover:bg-green-600")}
-          >
-            Tempo Real
-          </Toggle>
-        )}
+        {/* Botão "Ajustar Comparações" removido daqui, agora está em Dashboard.tsx */}
       </CardHeader>
       <CardContent className="h-[350px] p-4">
         {data.length > 0 ? (

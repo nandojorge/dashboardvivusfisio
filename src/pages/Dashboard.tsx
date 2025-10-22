@@ -18,9 +18,9 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart"; // Importar o novo gráfico
+import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
-// import { Toggle } from "@/components/ui/toggle"; // Removido: O Toggle será movido para o RegistrationTrendChart
+import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -75,7 +75,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  // const [isRealTime, setIsRealTime] = useState(false); // Removido: O estado isRealTime será gerido no RegistrationTrendChart
+  const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false); // Novo estado para Ajustar Comparações
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -241,39 +241,49 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex gap-2 mb-4 items-center"> {/* Adicionado items-center para alinhamento */}
+      <div className="flex gap-2 mb-4 items-center">
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("today"); }} // Removido setIsRealTime(false)
+          onClick={() => { setSelectedPeriod("today"); }}
         >
           Hoje
         </Button>
         <Button
           variant={selectedPeriod === "week" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("week"); }} // Removido setIsRealTime(false)
+          onClick={() => { setSelectedPeriod("week"); }}
         >
           Semana
         </Button>
         <Button
           variant={selectedPeriod === "month" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("month"); }} // Removido setIsRealTime(false)
+          onClick={() => { setSelectedPeriod("month"); }}
         >
           Mês
         </Button>
         <Button
           variant={selectedPeriod === "year" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("year"); }} // Removido setIsRealTime(false)
+          onClick={() => { setSelectedPeriod("year"); }}
         >
           Ano
         </Button>
         <Button
           variant={selectedPeriod === "all" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("all"); }} // Removido setIsRealTime(false)
+          onClick={() => { setSelectedPeriod("all"); }}
         >
           Todos
         </Button>
 
-        {/* Botão "Tempo Real" removido daqui, será movido para o RegistrationTrendChart */}
+        {/* Botão "Ajustar Comparações" */}
+        {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
+          <Toggle
+            pressed={isAdjustingComparisons}
+            onPressedChange={setIsAdjustingComparisons}
+            aria-label="Toggle ajustar comparações"
+            className={cn("ml-4", isAdjustingComparisons && "bg-green-500 text-white hover:bg-green-600")}
+          >
+            Ajustar Comparações
+          </Toggle>
+        )}
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-2">
@@ -336,7 +346,7 @@ const Dashboard = () => {
       <RegistrationTrendChart
         contacts={contacts || []}
         selectedPeriod={selectedPeriod}
-        // isRealTime={isRealTime} // Removido: isRealTime será gerido internamente
+        isAdjustingComparisons={isAdjustingComparisons} // Passar o novo estado como prop
       />
       
       {/* Contact County Bar Chart */}
