@@ -111,7 +111,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
                 bottom: 5,
               }}
               barGap={4} // Espaçamento entre as barras de cada categoria (mantido)
-              barCategoryGap={30} // Espaçamento entre as categorias (aumentado)
+              barCategoryGap={40} // Espaçamento entre as categorias (aumentado para 40)
             >
               <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
               <YAxis
