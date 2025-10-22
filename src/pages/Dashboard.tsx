@@ -320,7 +320,10 @@ const Dashboard = () => {
             pressed={isAdjustingComparisons}
             onPressedChange={setIsAdjustingComparisons}
             aria-label="Toggle ajustar comparações"
-            className={cn("ml-4", isAdjustingComparisons && "bg-green-500 text-white hover:bg-green-600")}
+            className={cn(
+              "ml-4",
+              isAdjustingComparisons && "!bg-green-500 !text-white hover:!bg-green-600"
+            )}
           >
             Ajustar Comparações
           </Toggle>
