@@ -136,8 +136,11 @@ const Leads = () => {
         return false;
       }
 
+      // Use datacontactolead for leads
       let itemDateString: string | undefined;
-      if ('dataregisto' in contact) {
+      if ('datacontactolead' in contact && contact.datacontactolead) {
+        itemDateString = contact.datacontactolead;
+      } else if ('dataregisto' in contact && contact.dataregisto) { // Fallback to dataregisto if datacontactolead is missing
         itemDateString = contact.dataregisto;
       }
 
@@ -197,8 +200,15 @@ const Leads = () => {
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
     return contacts.filter((contact) => {
       if (contact.status !== "Lead") return false; // Only count leads
-      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
-      const contactDate = parseISO(contact.dataregisto);
+      // Use datacontactolead for leads
+      let itemDateString: string | undefined;
+      if ('datacontactolead' in contact && contact.datacontactolead) {
+        itemDateString = contact.datacontactolead;
+      } else if ('dataregisto' in contact && contact.dataregisto) { // Fallback to dataregisto if datacontactolead is missing
+        itemDateString = contact.dataregisto;
+      }
+      if (!itemDateString || typeof itemDateString !== 'string') return false;
+      const contactDate = parseISO(itemDateString);
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
     }).length;
   }, [contacts, selectedPeriod, isAdjustingComparisons]);
