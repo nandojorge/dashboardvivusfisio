@@ -97,8 +97,16 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     }
 
     contacts.forEach(contact => {
-      if (contact.dataregisto) {
-        const date = parseISO(contact.dataregisto);
+      let dateString: string | undefined;
+      // Prioritize datacontactolead for Leads, fallback to dataregisto
+      if (contact.status === "Lead" && contact.datacontactolead) {
+        dateString = contact.datacontactolead;
+      } else if (contact.dataregisto) {
+        dateString = contact.dataregisto;
+      }
+
+      if (dateString) {
+        const date = parseISO(dateString);
         if (!isNaN(date.getTime())) {
           let shouldInclude = true;
 
@@ -126,8 +134,15 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     let earliestContactDate = now;
     if (contacts.length > 0) {
       earliestContactDate = contacts.reduce((minDate, contact) => {
-        if (contact.dataregisto) {
-          const date = parseISO(contact.dataregisto);
+        let contactDateString: string | undefined;
+        if (contact.status === "Lead" && contact.datacontactolead) {
+          contactDateString = contact.datacontactolead;
+        } else if (contact.dataregisto) {
+          contactDateString = contact.dataregisto;
+        }
+
+        if (contactDateString) {
+          const date = parseISO(contactDateString);
           if (!isNaN(date.getTime()) && isBefore(date, minDate)) {
             return date;
           }
