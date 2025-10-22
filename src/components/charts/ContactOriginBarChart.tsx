@@ -144,8 +144,10 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
                   return value;
                 }}
               />
-              {/* Ordem das barras alterada: currentValue primeiro, depois previousValue */}
-              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
+              {/* Ordem das barras: currentValue primeiro, depois previousValue */}
+              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
+                <LabelList dataKey="currentValue" content={renderCustomizedLabel} /> {/* Label na barra do período atual */}
+              </Bar>
               <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20}>
                 <LabelList dataKey="previousValue" content={renderCustomizedLabel} /> {/* Label na barra do período anterior */}
               </Bar>
