@@ -116,7 +116,7 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentCo
                 bottom: 5,
               }}
               barGap={4} // Espaçamento entre as barras de cada categoria (mantido)
-              barCategoryGap={40} // Espaçamento entre as categorias (aumentado para 40)
+              barCategoryGap={50} // Espaçamento entre as categorias (aumentado para 50)
             >
               <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
               <YAxis
