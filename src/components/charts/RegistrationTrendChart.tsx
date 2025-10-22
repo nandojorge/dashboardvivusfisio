@@ -20,7 +20,7 @@ import {
   addYears,
   getYear,
 } from 'date-fns';
-import { ptBR } = from 'date-fns/locale';
+import { ptBR } from 'date-fns/locale';
 // import { Toggle } from "@/components/ui/toggle"; // Removido: O Toggle será gerido externamente
 // import { cn } from "@/lib/utils"; // Removido: cn não é mais necessário aqui
 
