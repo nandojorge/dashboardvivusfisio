@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getContacts } from "@/api/contacts";
+import { getLeads } from "@/api/leads"; // Importar a nova função getLeads
 import { Contact } from "@/types/contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,7 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
   return { start, end };
 };
 
-// Helper function to filter items (contacts) by period AND status "Lead"
+// Helper function to filter items (leads) by period
 const getLeadPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
   const now = new Date();
   switch (period) {
@@ -118,9 +118,10 @@ const Leads = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
   const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
 
-  const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
-    queryKey: ["contacts"],
-    queryFn: getContacts,
+  // Usar getLeads para buscar apenas os dados de leads
+  const { data: leads, isLoading, isError, error } = useQuery<Contact[], Error>({
+    queryKey: ["leads"], // Chave de query diferente para leads
+    queryFn: getLeads,
   });
 
   // Define origins in lowercase for consistency
@@ -128,20 +129,16 @@ const Leads = () => {
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
-  const processLeadsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
-    if (!allContacts) return [];
-    return allContacts.filter((contact) => {
-      // First, filter by status "Lead"
-      if (contact.status !== "Lead") {
-        return false;
-      }
-
-      // Use datacontactolead for leads
+  // Processar leads para o período atual
+  const processLeadsForPeriod = (allLeads: Contact[] | undefined, periodFilterFn: (leadDate: Date) => boolean) => {
+    if (!allLeads) return [];
+    return allLeads.filter((lead) => {
+      // Para leads, priorizamos datacontactolead, com fallback para dataregisto
       let itemDateString: string | undefined;
-      if ('datacontactolead' in contact && contact.datacontactolead) {
-        itemDateString = contact.datacontactolead;
-      } else if ('dataregisto' in contact && contact.dataregisto) { // Fallback to dataregisto if datacontactolead is missing
-        itemDateString = contact.dataregisto;
+      if (lead.datacontactolead) {
+        itemDateString = lead.datacontactolead;
+      } else if (lead.dataregisto) {
+        itemDateString = lead.dataregisto;
       }
 
       if (!itemDateString || typeof itemDateString !== 'string') {
@@ -149,23 +146,23 @@ const Leads = () => {
       }
       const itemDate = parseISO(itemDateString);
       if (isNaN(itemDate.getTime())) {
-        console.warn(`Invalid date string for lead ${contact.id}: ${itemDateString}`);
+        console.warn(`Invalid date string for lead ${lead.id}: ${itemDateString}`);
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map((contact) => {
-      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
+    }).map((lead) => {
+      let assignedOrigin = lead.origemcontacto ? lead.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
-      let assignedCounty = contact.concelho ? contact.concelho : '';
+      let assignedCounty = lead.concelho ? lead.concelho : '';
       if (!assignedCounty) {
         assignedCounty = exampleCounties[Math.floor(Math.random() * exampleCounties.length)];
       }
 
       return {
-        ...contact,
+        ...lead,
         origemcontacto: assignedOrigin,
         concelho: assignedCounty, // Atribuir concelho
       };
@@ -173,45 +170,42 @@ const Leads = () => {
   };
 
   const filteredLeads = useMemo(() => {
-    return processLeadsForPeriod(contacts, (contactDate) => getLeadPeriodFilter(contactDate, selectedPeriod));
-  }, [contacts, selectedPeriod]);
+    return processLeadsForPeriod(leads, (leadDate) => getLeadPeriodFilter(leadDate, selectedPeriod));
+  }, [leads, selectedPeriod]);
 
-  // Calculate previous period leads (actual objects)
+  // Calcular leads do período anterior
   const previousPeriodLeads = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return [];
+    if (!leads || selectedPeriod === "all") return [];
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return processLeadsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }));
-  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+    return processLeadsForPeriod(leads, (leadDate) => isWithinInterval(leadDate, { start: start, end: end }));
+  }, [leads, selectedPeriod, isAdjustingComparisons]);
 
   const filteredLeadsCount = useMemo(() => {
     return filteredLeads.length;
   }, [filteredLeads]);
 
   const activeLeadsCount = useMemo(() => {
-    // For leads, "active" might mean not archived, or simply being a "Lead" status.
-    // Assuming "active" means not archived for consistency with contacts.
+    // Para leads, "ativo" significa não arquivado.
     return filteredLeads.filter(lead => lead.arquivado === "nao").length;
   }, [filteredLeads]);
 
   const previousPeriodLeadsCount = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return 0;
+    if (!leads || selectedPeriod === "all") return 0;
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return contacts.filter((contact) => {
-      if (contact.status !== "Lead") return false; // Only count leads
-      // Use datacontactolead for leads
+    return leads.filter((lead) => {
       let itemDateString: string | undefined;
-      if ('datacontactolead' in contact && contact.datacontactolead) {
-        itemDateString = contact.datacontactolead;
-      } else if ('dataregisto' in contact && contact.dataregisto) { // Fallback to dataregisto if datacontactolead is missing
-        itemDateString = contact.dataregisto;
+      if (lead.datacontactolead) {
+        itemDateString = lead.datacontactolead;
+      } else if (lead.dataregisto) {
+        itemDateString = lead.dataregisto;
       }
       if (!itemDateString || typeof itemDateString !== 'string') return false;
-      const contactDate = parseISO(itemDateString);
-      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
+      const leadDate = parseISO(itemDateString);
+      return !isNaN(leadDate.getTime()) && isWithinInterval(leadDate, { start: start, end: end });
     }).length;
-  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+  }, [leads, selectedPeriod, isAdjustingComparisons]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -405,7 +399,7 @@ const Leads = () => {
 
       {/* Registration Trend Chart (for Leads) */}
       <RegistrationTrendChart
-        contacts={contacts ? contacts.filter(c => c.status === "Lead") : []} // Pass only leads to the trend chart
+        contacts={leads || []} // Pass all leads directly to the trend chart
         selectedPeriod={selectedPeriod}
         isAdjustingComparisons={isAdjustingComparisons}
       />
