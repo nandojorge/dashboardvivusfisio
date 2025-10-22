@@ -18,8 +18,9 @@ import {
   addWeeks,
   addMonths,
   addYears,
+  getYear,
 } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR } = from 'date-fns/locale';
 // import { Toggle } from "@/components/ui/toggle"; // Removido: O Toggle será gerido externamente
 // import { cn } from "@/lib/utils"; // Removido: cn não é mais necessário aqui
 
@@ -55,15 +56,10 @@ const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "
 };
 
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod, isAdjustingComparisons }) => {
-  // const [isRealTime, setIsRealTime] = useState(false); // Removido: Estado local para Tempo Real
-
-  // Reset isRealTime when selectedPeriod changes
-  // useEffect(() => {
-  //   setIsRealTime(false);
-  // }, [selectedPeriod]); // Removido: useEffect para resetar isRealTime
-
-  const data = React.useMemo(() => {
-    if (!contacts || contacts.length === 0) return [];
+  const { data, numberOfYearsWithRecords } = React.useMemo(() => {
+    if (!contacts || contacts.length === 0) {
+      return { data: [], numberOfYearsWithRecords: 0 };
+    }
 
     const now = new Date();
     const aggregatedData: { [key: string]: number } = {};
@@ -89,13 +85,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         addUnit = addMonths;
         break;
       case "year":
-        // For 'year', aggregate by year
-        dateFormat = 'yyyy';
-        aggregateBy = startOfYear;
-        addUnit = addYears;
-        break;
-      case "all":
-        // For 'all', aggregate by year
+      case "all": // Both 'year' and 'all' aggregate by year
         dateFormat = 'yyyy';
         aggregateBy = startOfYear;
         addUnit = addYears;
@@ -131,35 +121,53 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
       }
     });
 
-    // Generate a series of dates for the last 20 periods
     const chartData: { name: string; registrations: number }[] = [];
     
-    // Find the earliest contact date to ensure we don't go too far back
-    const earliestContactDate = contacts.reduce((minDate, contact) => {
-      if (contact.dataregisto) {
-        const date = parseISO(contact.dataregisto);
-        if (!isNaN(date.getTime()) && isBefore(date, minDate)) {
-          return date;
+    let earliestContactDate = now;
+    if (contacts.length > 0) {
+      earliestContactDate = contacts.reduce((minDate, contact) => {
+        if (contact.dataregisto) {
+          const date = parseISO(contact.dataregisto);
+          if (!isNaN(date.getTime()) && isBefore(date, minDate)) {
+            return date;
+          }
         }
-      }
-      return minDate;
-    }, now);
-
-    // Go back up to 20 periods, or until the earliest contact date
-    for (let i = 0; i < 20; i++) {
-      const periodStart = aggregateBy(addUnit(now, -i));
-      if (isBefore(periodStart, aggregateBy(earliestContactDate)) && i > 0) {
-        break; // Stop if we go before the earliest contact date
-      }
-      const key = format(periodStart, dateFormat, { locale: ptBR });
-      chartData.unshift({
-        name: key,
-        registrations: aggregatedData[key] || 0,
-      });
+        return minDate;
+      }, now);
     }
 
-    return chartData;
-  }, [contacts, selectedPeriod, isAdjustingComparisons]); // Adicionar isAdjustingComparisons como dependência
+    let minYear = getYear(earliestContactDate);
+    const currentYear = getYear(now);
+    let calculatedNumberOfYears = 0;
+
+    if (selectedPeriod === "year" || selectedPeriod === "all") {
+      // For 'year' and 'all', iterate from the earliest year to the current year
+      for (let year = minYear; year <= currentYear; year++) {
+        const periodStart = startOfYear(new Date(year, 0, 1)); // Jan 1st of the year
+        const key = format(periodStart, dateFormat, { locale: ptBR });
+        chartData.push({
+          name: key,
+          registrations: aggregatedData[key] || 0,
+        });
+      }
+      calculatedNumberOfYears = currentYear - minYear + 1;
+    } else {
+      // For other periods, go back up to 20 periods, or until the earliest contact date
+      for (let i = 0; i < 20; i++) {
+        const periodStart = aggregateBy(addUnit(now, -i));
+        if (isBefore(periodStart, aggregateBy(earliestContactDate)) && i > 0) {
+          break; // Stop if we go before the earliest contact date
+        }
+        const key = format(periodStart, dateFormat, { locale: ptBR });
+        chartData.unshift({
+          name: key,
+          registrations: aggregatedData[key] || 0,
+        });
+      }
+    }
+
+    return { data: chartData, numberOfYearsWithRecords: calculatedNumberOfYears };
+  }, [contacts, selectedPeriod, isAdjustingComparisons]);
 
   const getChartTitle = () => {
     let title = "Evolução Temporal dos Registos";
@@ -174,10 +182,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Mensais (20 Meses)";
         break;
       case "year":
-        title = "Registos Anuais (20 Anos)";
-        break;
       case "all":
-        title = "Registos Anuais (20 Anos)";
+        title = `Registos Anuais (${numberOfYearsWithRecords} Anos)`;
         break;
     }
     return title;
