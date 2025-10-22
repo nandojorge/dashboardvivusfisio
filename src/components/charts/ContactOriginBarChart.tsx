@@ -1,62 +1,81 @@
 "use client";
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
+import { ptBR } from 'date-fns/locale';
 
 interface ContactOriginBarChartProps {
-  contacts: Contact[]; // Contactos do período atual
+  currentContacts: Contact[]; // Contactos do período atual
+  previousContacts: Contact[]; // Contactos do período anterior
+  selectedPeriod: "today" | "week" | "month" | "year" | "all";
 }
 
-const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts }) => {
-  const data = React.useMemo(() => {
-    const processContacts = (contactList: Contact[]) => {
-      const originCounts: { [key: string]: number } = {};
-      contactList.forEach(contact => {
-        const origin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : 'desconhecida';
-        originCounts[origin] = (originCounts[origin] || 0) + 1;
-      });
-      return originCounts;
-    };
-
-    const currentOriginCounts = processContacts(contacts);
-
-    const chartData = Object.keys(currentOriginCounts).map(origin => ({
-      name: origin,
-      value: currentOriginCounts[origin] || 0,
-    }));
-
-    // Sort the data by value in descending order, then by name alphabetically
-    chartData.sort((a, b) => {
-      if (b.value !== a.value) {
-        return b.value - a.value;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    return chartData;
-  }, [contacts]);
-
-  // Helper function to capitalize the first letter of a string
+const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentContacts, previousContacts, selectedPeriod }) => {
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  // Custom label formatter for BarChart to display the count inside the bar
+  const getPreviousPeriodLabel = (period: string) => {
+    switch (period) {
+      case "today":
+        return "Ontem";
+      case "week":
+        return "Semana Anterior";
+      case "month":
+        return "Mês Anterior";
+      case "year":
+        return "Ano Anterior";
+      default:
+        return "Período Anterior";
+    }
+  };
+
+  const data = React.useMemo(() => {
+    const processCounts = (contactList: Contact[]) => {
+      const counts: { [key: string]: number } = {};
+      contactList.forEach(contact => {
+        const origin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : 'desconhecida';
+        counts[origin] = (counts[origin] || 0) + 1;
+      });
+      return counts;
+    };
+
+    const currentCounts = processCounts(currentContacts);
+    const previousCounts = processCounts(previousContacts);
+
+    const allOrigins = Array.from(new Set([...Object.keys(currentCounts), ...Object.keys(previousCounts)]));
+
+    const chartData = allOrigins.map(origin => ({
+      name: origin,
+      currentValue: currentCounts[origin] || 0,
+      previousValue: previousCounts[origin] || 0,
+    }));
+
+    // Sort the data by current value in descending order, then by name alphabetically
+    chartData.sort((a, b) => {
+      if (b.currentValue !== a.currentValue) {
+        return b.currentValue - a.currentValue;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return chartData;
+  }, [currentContacts, previousContacts]);
+
   const renderCustomizedLabel = (props: any) => {
     const { x, y, width, height, value } = props;
 
-    if (value === 0) return null; // Don't show label for zero values
+    if (value === 0) return null;
 
-    // Position the label inside the bar, aligned to the right
-    const offset = 8; // Padding from the right edge of the bar
+    const offset = 8;
     return (
       <text
         x={x + width - offset}
         y={y + height / 2}
-        fill="hsl(var(--primary-foreground))" // White text
+        fill="hsl(var(--primary-foreground))"
         textAnchor="end"
         dominantBaseline="middle"
         className="text-sm font-semibold"
@@ -66,15 +85,13 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
     );
   };
 
-  // Calculate dynamic height for the chart based on number of bars
   const minCategoryHeight = 45;
   const baseChartPadding = 100;
   const dynamicChartHeight = data.length > 0
     ? Math.max(150, data.length * minCategoryHeight + baseChartPadding)
     : 150;
 
-  // Calculate max value for X-axis domain
-  const maxTotalValue = Math.max(...data.map(d => d.value), 0);
+  const maxTotalValue = Math.max(...data.flatMap(d => [d.currentValue, d.previousValue]), 0);
 
   return (
     <Card className="col-span-full">
@@ -89,21 +106,21 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
               data={data}
               margin={{
                 top: 20,
-                right: 20, // Ajustado para acomodar o valor dentro da barra
-                left: 100, // Mais espaço para os nomes das categorias
+                right: 20,
+                left: 100,
                 bottom: 5,
               }}
-              barGap={8} // Espaçamento entre as barras
+              barGap={4} // Espaçamento entre as barras de cada categoria
+              barCategoryGap={10} // Espaçamento entre as categorias
             >
-              {/* CartesianGrid removido */}
-              <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} /> {/* Eixo X escondido */}
+              <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
               <YAxis
                 type="category"
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={90} // Mais largura para os nomes das categorias
+                width={90}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
               />
@@ -116,12 +133,20 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number) => [`${value}`, 'Contactos']} // Apenas o valor
+                formatter={(value: number, name: string) => [`${value}`, capitalizeFirstLetter(name)]}
                 labelFormatter={(label: string) => capitalizeFirstLetter(label)}
               />
-              {/* Legend removida */}
-              <Bar dataKey="value" name="Contactos" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={30}>
-                <LabelList dataKey="value" content={renderCustomizedLabel} />
+              <Legend
+                wrapperStyle={{ paddingTop: '10px' }}
+                formatter={(value: string) => {
+                  if (value === 'currentValue') return `Período Atual`;
+                  if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
+                  return value;
+                }}
+              />
+              <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20} />
+              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
+                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
