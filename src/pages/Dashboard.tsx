@@ -13,41 +13,82 @@ import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
-  isWithinInterval
+  isWithinInterval,
+  format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
+  isBefore, isSameDay, addDays
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
 import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
-import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
+import { Toggle } from "@/components/ui/toggle";
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
-// Helper function to get previous period interval
-const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
+// Helper function to get the real-time cutoff date for a given period's start date
+const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
+  let cutoffDate = periodStartDate;
+
+  switch (selectedPeriod) {
+    case "week":
+      // Cutoff is the same day of the week as 'now' within the 'periodStartDate' week
+      const currentDayOfWeek = getDay(now); // 0 (Sun) - 6 (Sat)
+      cutoffDate = addDays(startOfWeek(periodStartDate, { weekStartsOn: 0, locale: ptBR }), currentDayOfWeek);
+      return endOfDay(cutoffDate); // Include the entire cutoff day
+    case "month":
+      // Cutoff is the same day of the month as 'now' within the 'periodStartDate' month
+      const currentDayOfMonth = getDate(now);
+      cutoffDate = setDate(startOfMonth(periodStartDate), currentDayOfMonth);
+      return endOfDay(cutoffDate);
+    case "year":
+      // Cutoff is the same day of the year as 'now' within the 'periodStartDate' year
+      const currentDayOfYear = getDayOfYear(now);
+      cutoffDate = setDayOfYear(startOfYear(periodStartDate), currentDayOfYear);
+      return endOfDay(cutoffDate);
+    default:
+      return now; // Should not be reached for these periods
+  }
+};
+
+// Helper function to get previous period interval, now considering adjustment
+const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdjustingComparisons: boolean) => {
   let start: Date;
   let end: Date;
+  let previousPeriodStart: Date;
 
   switch (currentPeriod) {
     case "today":
-      start = startOfDay(subDays(now, 1));
-      end = endOfDay(subDays(now, 1));
+      previousPeriodStart = subDays(now, 1);
+      start = startOfDay(previousPeriodStart);
+      end = endOfDay(previousPeriodStart);
       break;
     case "week":
-      start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
-      end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
+      previousPeriodStart = subWeeks(now, 1);
+      start = startOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
+      end = endOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
+      if (isAdjustingComparisons) {
+        end = getRealTimeCutoffDate(start, "week", now);
+      }
       break;
     case "month":
-      start = startOfMonth(subMonths(now, 1));
-      end = endOfMonth(subMonths(now, 1));
+      previousPeriodStart = subMonths(now, 1);
+      start = startOfMonth(previousPeriodStart);
+      end = endOfMonth(previousPeriodStart);
+      if (isAdjustingComparisons) {
+        end = getRealTimeCutoffDate(start, "month", now);
+      }
       break;
     case "year":
-      start = startOfYear(subYears(now, 1));
-      end = endOfYear(subYears(now, 1));
+      previousPeriodStart = subYears(now, 1);
+      start = startOfYear(previousPeriodStart);
+      end = endOfYear(previousPeriodStart);
+      if (isAdjustingComparisons) {
+        end = getRealTimeCutoffDate(start, "year", now);
+      }
       break;
     case "all":
-      return { start: new Date(0), end: now };
+      return { start: new Date(0), end: now }; // "All" period doesn't have a "previous" in this context
     default:
       return { start: now, end: now };
   }
@@ -75,7 +116,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false); // Novo estado para Ajustar Comparações
+  const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -132,9 +173,9 @@ const Dashboard = () => {
   const previousPeriodContacts = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return [];
     const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }));
-  }, [contacts, selectedPeriod]);
+  }, [contacts, selectedPeriod, isAdjustingComparisons]);
 
   const filteredContactsCount = useMemo(() => {
     return filteredContacts.length;
@@ -147,13 +188,13 @@ const Dashboard = () => {
   const previousPeriodContactsCount = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return 0;
     const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
     return contacts.filter((contact) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
       const contactDate = parseISO(contact.dataregisto);
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
     }).length;
-  }, [contacts, selectedPeriod]);
+  }, [contacts, selectedPeriod, isAdjustingComparisons]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
