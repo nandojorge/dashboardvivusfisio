@@ -70,13 +70,13 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
 
     if (value === 0) return null;
 
-    const offset = 8;
+    const offset = 8; // Espaçamento do lado de fora da barra
     return (
       <text
-        x={x + width - offset}
+        x={x + width + offset} // Move o texto para fora da barra, à direita
         y={y + height / 2}
-        fill="hsl(var(--primary-foreground))" // Cor do texto para o valor
-        textAnchor="end"
+        fill="hsl(var(--foreground))" // Cor do texto para o valor
+        textAnchor="start" // Alinha o texto para começar a partir da posição x
         dominantBaseline="middle"
         className="text-sm font-semibold"
       >
