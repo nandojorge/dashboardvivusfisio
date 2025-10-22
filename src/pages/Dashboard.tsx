@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { Terminal, Users, TrendingUp, TrendingDown, UserPlus } from "lucide-react";
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -128,7 +128,6 @@ const Dashboard = () => {
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
-
   const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
     if (!allContacts) return [];
     return allContacts.filter((contact) => {
@@ -142,7 +141,7 @@ const Dashboard = () => {
       }
       const itemDate = parseISO(itemDateString);
       if (isNaN(itemDate.getTime())) {
-        console.warn(`Invalid date string for item ${contact.id}: ${itemDateString}`);
+        console.warn(`Invalid date string for contact ${contact.id}: ${itemDateString}`);
         return false;
       }
       return periodFilterFn(itemDate);
@@ -177,19 +176,31 @@ const Dashboard = () => {
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }));
   }, [contacts, selectedPeriod, isAdjustingComparisons]);
 
-  const filteredContactsCount = useMemo(() => {
+  const totalContactsCount = useMemo(() => {
     return filteredContacts.length;
   }, [filteredContacts]);
 
-  const activeContactsCount = useMemo(() => {
-    return filteredContacts.filter(contact => contact.arquivado === "nao").length;
+  const newContactsCount = useMemo(() => {
+    return filteredContacts.filter(contact => contact.status === "Lead").length;
   }, [filteredContacts]);
 
-  const previousPeriodContactsCount = useMemo(() => {
+  const previousPeriodTotalContactsCount = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return 0;
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
     return contacts.filter((contact) => {
+      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
+      const contactDate = parseISO(contact.dataregisto);
+      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
+    }).length;
+  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+
+  const previousPeriodNewContactsCount = useMemo(() => {
+    if (!contacts || selectedPeriod === "all") return 0;
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
+    return contacts.filter((contact) => {
+      if (contact.status !== "Lead") return false;
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
       const contactDate = parseISO(contact.dataregisto);
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
@@ -251,7 +262,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+        <h1 className="text-3xl font-bold">Contactos Info</h1>
         <Card>
           <CardHeader>
             <CardTitle>Carregando Dados...</CardTitle>
@@ -267,7 +278,7 @@ const Dashboard = () => {
   if (isError) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+        <h1 className="text-3xl font-bold">Contactos Info</h1>
         <Alert variant="destructive">
           <Terminal className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
@@ -281,7 +292,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+      <h1 className="text-3xl font-bold">Contactos Info</h1>
       <div className="flex gap-2 mb-4 items-center">
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
@@ -331,7 +342,7 @@ const Dashboard = () => {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-2">
-        {/* Cartão de Contactos */}
+        {/* Cartão de Total de Contactos */}
         <Card className="min-w-[280px] flex-shrink-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -342,14 +353,14 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredContactsCount}</div>
+            <div className="text-2xl font-bold">{totalContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
-                  {previousPeriodContactsCount}
+                <span className={cn("ml-1", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
+                  {previousPeriodTotalContactsCount}
                 </span>
-                {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
+                {getTrendIcon(totalContactsCount, previousPeriodTotalContactsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
@@ -360,21 +371,32 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Novo Cartão de Contactos Ativos */}
+        {/* Cartão de Novos Contactos (Leads) */}
         <Card className="min-w-[280px] flex-shrink-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Contactos Ativos
+              Novos Contactos (Leads)
             </CardTitle>
             <div className="rounded-full bg-green-500/10 p-2 flex items-center justify-center">
-              <Users className="h-4 w-4 text-green-500" />
+              <UserPlus className="h-4 w-4 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeContactsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Contactos não arquivados
-            </p>
+            <div className="text-2xl font-bold">{newContactsCount}</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
+                  {previousPeriodNewContactsCount}
+                </span>
+                {getTrendIcon(newContactsCount, previousPeriodNewContactsCount)}
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -386,13 +408,13 @@ const Dashboard = () => {
         selectedPeriod={selectedPeriod}
       />
 
-      {/* New Registration Trend Chart */}
+      {/* Registration Trend Chart */}
       <RegistrationTrendChart
         contacts={contacts || []}
         selectedPeriod={selectedPeriod}
-        isAdjustingComparisons={isAdjustingComparisons} // Passar o novo estado como prop
+        isAdjustingComparisons={isAdjustingComparisons}
       />
-      
+
       {/* Contact County Bar Chart */}
       <ContactCountyBarChart
         currentContacts={filteredContacts}
