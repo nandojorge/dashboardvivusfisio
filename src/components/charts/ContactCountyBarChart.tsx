@@ -115,8 +115,8 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentCo
                 left: 100,
                 bottom: 5,
               }}
-              barGap={4} // Espaçamento entre as barras de cada categoria
-              barCategoryGap={10} // Espaçamento entre as categorias
+              barGap={4} // Espaçamento entre as barras de cada categoria (mantido)
+              barCategoryGap={30} // Espaçamento entre as categorias (aumentado)
             >
               <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
               <YAxis
@@ -149,12 +149,11 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentCo
                   return value;
                 }}
               />
-              {/* Ordem das barras: currentValue primeiro, depois previousValue */}
               <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="currentValue" content={renderCustomizedLabel} /> {/* Label na barra do período atual */}
+                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
               </Bar>
               <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="previousValue" content={renderCustomizedLabel} /> {/* Label na barra do período anterior */}
+                <LabelList dataKey="previousValue" content={renderCustomizedLabel} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
