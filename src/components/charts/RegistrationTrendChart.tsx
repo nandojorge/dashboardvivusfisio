@@ -180,9 +180,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Anuais (Últimos 20 Anos)";
         break;
     }
-    if (isAdjustingComparisons && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
-      title += " (Ajustado para Comparações)";
-    }
+    // Removido: if (isAdjustingComparisons && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
+    // Removido:   title += " (Ajustado para Comparações)";
+    // Removido: }
     return title;
   };
 
