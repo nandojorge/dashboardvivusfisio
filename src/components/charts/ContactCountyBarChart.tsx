@@ -80,7 +80,7 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentCo
       <text
         x={x + width - offset}
         y={y + height / 2}
-        fill="hsl(var(--primary-foreground))"
+        fill="hsl(var(--primary-foreground))" // Cor do texto para o valor
         textAnchor="end"
         dominantBaseline="middle"
         className="text-sm font-semibold"
@@ -149,9 +149,10 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentCo
                   return value;
                 }}
               />
-              <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20} />
-              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
+              {/* Ordem das barras alterada: currentValue primeiro, depois previousValue */}
+              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
+              <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20}>
+                <LabelList dataKey="previousValue" content={renderCustomizedLabel} /> {/* Label na barra do período anterior */}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
