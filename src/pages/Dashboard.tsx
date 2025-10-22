@@ -128,12 +128,16 @@ const Dashboard = () => {
     return processContactsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
   }, [contacts, selectedPeriod]);
 
-  // Calculate previous period contacts
+  // Calculate previous period contacts (still needed for the "Total de Contactos" card)
   const previousPeriodFilteredContacts = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return [];
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
+    return contacts.filter((contact) => {
+      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
+      const contactDate = parseISO(contact.dataregisto);
+      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
+    }).length;
   }, [contacts, selectedPeriod]);
 
   const filteredContactsCount = useMemo(() => {
@@ -328,7 +332,6 @@ const Dashboard = () => {
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
         contacts={filteredContacts}
-        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
 
       {/* New Registration Trend Chart */}
@@ -341,7 +344,6 @@ const Dashboard = () => {
       {/* Contact County Bar Chart */}
       <ContactCountyBarChart
         contacts={filteredContacts}
-        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
     </div>
   );
