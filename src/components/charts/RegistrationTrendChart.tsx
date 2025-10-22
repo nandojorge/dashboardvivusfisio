@@ -165,19 +165,19 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     let title = "Evolução Temporal dos Registos";
     switch (selectedPeriod) {
       case "today":
-        title = "Registos Diários (Últimos 20 Dias)";
+        title = "Registos Diários (20 Dias)";
         break;
       case "week":
-        title = "Registos Semanais (20 Semanas)"; // Alterado aqui
+        title = "Registos Semanais (20 Semanas)";
         break;
       case "month":
-        title = "Registos Mensais (Últimos 20 Meses)";
+        title = "Registos Mensais (20 Meses)";
         break;
       case "year":
-        title = "Registos Anuais (Últimos 20 Anos)";
+        title = "Registos Anuais (20 Anos)";
         break;
       case "all":
-        title = "Registos Anuais (Últimos 20 Anos)";
+        title = "Registos Anuais (20 Anos)";
         break;
     }
     return title;
