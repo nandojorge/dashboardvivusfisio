@@ -227,7 +227,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Tendência de Registos</CardTitle>
+        <CardTitle>Contactos Recebidos</CardTitle>
         <CardDescription>
           Número de registos ao longo do tempo para o período selecionado.
         </CardDescription>
