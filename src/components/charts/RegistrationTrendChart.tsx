@@ -19,163 +19,114 @@ import {
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
   isWithinInterval,
   format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
-  isBefore, isSameDay, addDays, isAfter, differenceInYears, addYears, addMonths
+  isBefore, isSameDay, addDays, isAfter, differenceInYears, addYears, addMonths, addWeeks
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
-
-// Helper function to get the real-time cutoff date for a given period's start date
-const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
-  let cutoffDate = periodStartDate;
-  switch (selectedPeriod) {
-    case "week":
-      const currentDayOfWeek = getDay(now);
-      cutoffDate = addDays(startOfWeek(periodStartDate, { weekStartsOn: 0, locale: ptBR }), currentDayOfWeek);
-      return endOfDay(cutoffDate);
-    case "month":
-      const currentDayOfMonth = getDate(now);
-      cutoffDate = setDate(startOfMonth(periodStartDate), currentDayOfMonth);
-      return endOfDay(cutoffDate);
-    case "year":
-      const currentDayOfYear = getDayOfYear(now);
-      cutoffDate = setDayOfYear(startOfYear(periodStartDate), currentDayOfYear);
-      return endOfDay(cutoffDate);
-    default:
-      return now;
-  }
-};
-
-// Helper function to get period interval (local to this component)
-const getPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdjustingComparisons: boolean) => {
-  let start: Date;
-  let end: Date;
-
-  switch (currentPeriod) {
-    case "today":
-      start = startOfDay(now);
-      end = endOfDay(now);
-      break;
-    case "7days":
-      start = startOfDay(subDays(now, 6));
-      end = endOfDay(now);
-      break;
-    case "30days":
-      start = startOfDay(subDays(now, 29));
-      end = endOfDay(now);
-      break;
-    case "60days":
-      start = startOfDay(subDays(now, 59));
-      end = endOfDay(now);
-      break;
-    case "12months":
-      start = startOfDay(subMonths(now, 11));
-      end = endOfDay(now);
-      break;
-    case "week":
-      start = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
-      end = endOfWeek(now, { weekStartsOn: 0, locale: ptBR });
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "week", now);
-      }
-      break;
-    case "month":
-      start = startOfMonth(now);
-      end = endOfMonth(now);
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "month", now);
-      }
-      break;
-    case "year":
-      start = startOfYear(now);
-      end = endOfYear(now);
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "year", now);
-      }
-      break;
-    case "all":
-      // This case is handled specifically in processDataForChart based on actual data
-      return { start: new Date(0), end: now }; // Placeholder
-    default:
-      return { start: now, end: now };
-  }
-  return { start, end };
-};
+type GroupUnit = 'day' | 'week' | 'month' | 'year';
 
 interface RegistrationTrendChartProps {
-  data: Contact[]; // Now receives already filtered and combined data
+  allContacts: Contact[]; // Unfiltered contacts
+  allLeads: Contact[];    // Unfiltered leads
   selectedPeriod: FilterPeriod;
-  isAdjustingComparisons: boolean;
 }
 
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
-  data: filteredData, // Renamed to filteredData for clarity
+  allContacts,
+  allLeads,
   selectedPeriod,
-  isAdjustingComparisons,
 }) => {
   const processDataForChart = (
-    items: Contact[],
+    contacts: Contact[],
+    leads: Contact[],
     selectedPeriod: FilterPeriod,
-    isAdjustingComparisons: boolean
   ) => {
     const now = new Date();
+    const combinedRawData = [...contacts, ...leads];
 
-    // 1. Determine the actual min and max dates from the provided items
-    let minDataDate: Date | null = null;
-    let maxDataDate: Date | null = null;
+    // 1. Determine the actual min and max dates from ALL raw data
+    let minOverallDataDate: Date | null = null;
+    let maxOverallDataDate: Date | null = null;
 
-    if (items.length > 0) {
-      items.forEach(item => {
+    if (combinedRawData.length > 0) {
+      combinedRawData.forEach(item => {
         const dateString = item.datacontactolead || item.dataregisto;
         if (dateString) {
           const itemDate = parseISO(dateString);
           if (!isNaN(itemDate.getTime())) {
-            if (minDataDate === null || isBefore(itemDate, minDataDate)) {
-              minDataDate = itemDate;
+            if (minOverallDataDate === null || isBefore(itemDate, minOverallDataDate)) {
+              minOverallDataDate = itemDate;
             }
-            if (maxDataDate === null || isAfter(itemDate, maxDataDate)) {
-              maxDataDate = itemDate;
+            if (maxOverallDataDate === null || isAfter(itemDate, maxOverallDataDate)) {
+              maxOverallDataDate = itemDate;
             }
           }
         }
       });
     }
 
-    // If no valid dates in the filtered data, return empty
-    if (!minDataDate || !maxDataDate) {
+    if (!minOverallDataDate || !maxOverallDataDate) {
       return { chartData: [], groupUnit: 'day' };
     }
 
-    // 2. Determine the chart's interval (start and end dates for the chart)
-    let intervalStart: Date;
-    let intervalEnd: Date;
+    // 2. Determine the chart's interval (start and end dates for the chart) and grouping unit
+    let finalIntervalStart: Date;
+    let finalGroupUnit: GroupUnit;
+    const intervalEnd: Date = endOfDay(now); // Always end at the end of today for trend charts
 
-    if (selectedPeriod === "all") {
-      intervalStart = startOfMonth(minDataDate); // Start from the beginning of the month of the earliest contact
-      intervalEnd = endOfDay(now); // End at the end of today
-    } else {
-      const { start, end } = getPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-      intervalStart = start;
-      intervalEnd = end;
+    switch (selectedPeriod) {
+      case "today":
+      case "7days":
+      case "30days":
+      case "60days":
+        finalIntervalStart = startOfDay(subDays(now, 19)); // Last 20 days (today + 19 previous days)
+        finalGroupUnit = 'day';
+        break;
+      case "week":
+        finalIntervalStart = startOfWeek(subWeeks(now, 19), { weekStartsOn: 0, locale: ptBR }); // Last 20 weeks (current week + 19 previous weeks)
+        finalGroupUnit = 'week';
+        break;
+      case "month":
+      case "12months":
+        finalIntervalStart = startOfMonth(subMonths(now, 19)); // Last 20 months (current month + 19 previous months)
+        finalGroupUnit = 'month';
+        break;
+      case "year":
+        finalIntervalStart = startOfYear(minOverallDataDate); // All years from the earliest record
+        finalGroupUnit = 'year';
+        break;
+      case "all":
+        finalIntervalStart = startOfMonth(minOverallDataDate); // From the beginning of the month of the earliest contact
+        const diffInYears = differenceInYears(intervalEnd, finalIntervalStart);
+        if (diffInYears >= 2) { // If range is 2 years or more, group by year
+          finalGroupUnit = 'year';
+        } else { // Otherwise, group by month
+          finalGroupUnit = 'month';
+        }
+        break;
+      default:
+        finalIntervalStart = startOfDay(subDays(now, 19)); // Default to last 20 days
+        finalGroupUnit = 'day';
+        break;
     }
 
-    // 3. Determine the grouping unit based on the selected period and interval duration
-    let groupUnit: 'day' | 'month' | 'year';
-    if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "30days" || selectedPeriod === "60days") {
-      groupUnit = 'day';
-    } else if (selectedPeriod === "year" || selectedPeriod === "12months") {
-      groupUnit = 'month';
-    } else { // "all"
-      const diffInYears = differenceInYears(intervalEnd, intervalStart);
-      if (diffInYears >= 2) { // If range is 2 years or more, group by year
-        groupUnit = 'year';
-      } else { // Otherwise, group by month
-        groupUnit = 'month';
-      }
+    // Filter the combined raw data based on the determined interval
+    const itemsInInterval = combinedRawData.filter(item => {
+      const dateString = item.datacontactolead || item.dataregisto;
+      if (!dateString) return false;
+      const itemDate = parseISO(dateString);
+      if (isNaN(itemDate.getTime())) return false;
+      return isWithinInterval(itemDate, { start: finalIntervalStart, end: intervalEnd });
+    });
+
+    // If no items in the interval, return empty
+    if (itemsInInterval.length === 0) {
+      return { chartData: [], groupUnit: finalGroupUnit };
     }
 
-    // 4. Generate the date range for the chart's X-axis
-    const generateDateRange = (start: Date, end: Date, unit: 'day' | 'month' | 'year') => {
+    // 3. Generate the date range for the chart's X-axis
+    const generateDateRange = (start: Date, end: Date, unit: GroupUnit) => {
       const dates: Date[] = [];
       let currentDate = start;
 
@@ -183,6 +134,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
         dates.push(currentDate);
         if (unit === 'day') {
           currentDate = addDays(currentDate, 1);
+        } else if (unit === 'week') {
+          currentDate = addWeeks(currentDate, 1);
         } else if (unit === 'month') {
           currentDate = addMonths(currentDate, 1);
         } else if (unit === 'year') {
@@ -192,24 +145,26 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
       return dates;
     };
 
-    const dateRange = generateDateRange(intervalStart, intervalEnd, groupUnit);
+    const dateRange = generateDateRange(finalIntervalStart, intervalEnd, finalGroupUnit);
 
-    // 5. Initialize data map for chart
+    // 4. Initialize data map for chart
     const dateMap: { [key: string]: { date: Date; count: number; formattedDate: string } } = {};
     dateRange.forEach(date => {
       let key: string;
-      if (groupUnit === 'day') {
+      if (finalGroupUnit === 'day') {
         key = format(date, 'yyyy-MM-dd');
-      } else if (groupUnit === 'month') {
-        key = format(startOfMonth(date), 'yyyy-MM-dd');
+      } else if (finalGroupUnit === 'week') {
+        key = format(startOfWeek(date, { weekStartsOn: 0, locale: ptBR }), 'yyyy-MM-dd'); // Key by start of week
+      } else if (finalGroupUnit === 'month') {
+        key = format(startOfMonth(date), 'yyyy-MM');
       } else { // year
-        key = format(startOfYear(date), 'yyyy-MM-dd');
+        key = format(startOfYear(date), 'yyyy');
       }
-      dateMap[key] = { date, count: 0, formattedDate: formatDateLabel(date, groupUnit) };
+      dateMap[key] = { date, count: 0, formattedDate: formatDateLabel(date, finalGroupUnit) };
     });
 
-    // 6. Populate data map with actual counts
-    items.forEach(item => {
+    // 5. Populate data map with actual counts
+    itemsInInterval.forEach(item => {
       const dateString = item.datacontactolead || item.dataregisto;
       if (dateString) {
         const itemDate = parseISO(dateString);
@@ -217,14 +172,17 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
           let key: string;
           let dateToGroup = itemDate;
 
-          if (groupUnit === 'day') {
+          if (finalGroupUnit === 'day') {
             key = format(dateToGroup, 'yyyy-MM-dd');
-          } else if (groupUnit === 'month') {
+          } else if (finalGroupUnit === 'week') {
+            dateToGroup = startOfWeek(dateToGroup, { weekStartsOn: 0, locale: ptBR });
+            key = format(dateToGroup, 'yyyy-MM-dd');
+          } else if (finalGroupUnit === 'month') {
             dateToGroup = startOfMonth(dateToGroup);
-            key = format(dateToGroup, 'yyyy-MM-dd');
+            key = format(dateToGroup, 'yyyy-MM');
           } else { // year
             dateToGroup = startOfYear(dateToGroup);
-            key = format(dateToGroup, 'yyyy-MM-dd');
+            key = format(dateToGroup, 'yyyy');
           }
 
           if (dateMap[key]) {
@@ -234,15 +192,18 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
       }
     });
 
-    // 7. Convert map to array and sort by date
+    // 6. Convert map to array and sort by date
     const chartData = Object.values(dateMap).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    return { chartData, groupUnit };
+    return { chartData, groupUnit: finalGroupUnit };
   };
 
-  const formatDateLabel = (date: Date, groupUnit: 'day' | 'month' | 'year') => {
+  const formatDateLabel = (date: Date, groupUnit: GroupUnit) => {
     if (groupUnit === 'day') {
       return format(date, 'dd/MM', { locale: ptBR });
+    } else if (groupUnit === 'week') {
+      // Format for week: "Semana de dd/MM"
+      return `Semana de ${format(startOfWeek(date, { weekStartsOn: 0, locale: ptBR }), 'dd/MM', { locale: ptBR })}`;
     } else if (groupUnit === 'month') {
       return format(date, 'MMM yyyy', { locale: ptBR });
     } else if (groupUnit === 'year') {
@@ -252,8 +213,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
   };
 
   const { chartData, groupUnit } = useMemo(() => {
-    return processDataForChart(filteredData, selectedPeriod, isAdjustingComparisons);
-  }, [filteredData, selectedPeriod, isAdjustingComparisons]);
+    return processDataForChart(allContacts, allLeads, selectedPeriod);
+  }, [allContacts, allLeads, selectedPeriod]);
 
   return (
     <Card className="w-full">

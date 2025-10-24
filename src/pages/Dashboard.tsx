@@ -506,9 +506,9 @@ const Dashboard = () => {
 
       {/* Registration Trend Chart */}
       <RegistrationTrendChart
-        data={combinedFilteredData} // Pass already filtered data
+        allContacts={contactsData || []} // Pass raw contacts data
+        allLeads={leadsData || []}     // Pass raw leads data
         selectedPeriod={selectedPeriod}
-        isAdjustingComparisons={isAdjustingComparisons}
       />
 
       {/* Contact County Bar Chart */}
