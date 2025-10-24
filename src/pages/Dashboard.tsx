@@ -23,6 +23,13 @@ import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
 import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Importar componentes Select
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 
@@ -359,64 +366,34 @@ const Dashboard = () => {
     );
   }
 
+  const periodOptions: { value: FilterPeriod; label: string }[] = [
+    { value: "today", label: "Hoje" },
+    { value: "7days", label: "Últimos 7 Dias" },
+    { value: "30days", label: "Últimos 30 Dias" },
+    { value: "60days", label: "Últimos 60 Dias" },
+    { value: "12months", label: "Últimos 12 Meses" },
+    { value: "week", label: "Esta Semana" },
+    { value: "month", label: "Este Mês" },
+    { value: "year", label: "Este Ano" },
+    { value: "all", label: "Todos" },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex gap-2 mb-4 items-center flex-nowrap overflow-x-auto hide-scrollbar">
-        <Button
-          variant={selectedPeriod === "today" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("today"); }}
-        >
-          Hoje
-        </Button>
-        <Button
-          variant={selectedPeriod === "7days" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("7days"); }}
-        >
-          7 Dias
-        </Button>
-        <Button
-          variant={selectedPeriod === "30days" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("30days"); }}
-        >
-          30 Dias
-        </Button>
-        <Button
-          variant={selectedPeriod === "60days" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("60days"); }}
-        >
-          60 Dias
-        </Button>
-        <Button
-          variant={selectedPeriod === "12months" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("12months"); }}
-        >
-          12 Meses
-        </Button>
-        <Button
-          variant={selectedPeriod === "week" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("week"); }}
-        >
-          Semana
-        </Button>
-        <Button
-          variant={selectedPeriod === "month" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("month"); }}
-        >
-          Mês
-        </Button>
-        <Button
-          variant={selectedPeriod === "year" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("year"); }}
-        >
-          Ano
-        </Button>
-        <Button
-          variant={selectedPeriod === "all" ? "default" : "outline"}
-          onClick={() => { setSelectedPeriod("all"); }}
-        >
-          Todos
-        </Button>
+      <div className="flex flex-wrap items-center gap-4 mb-4"> {/* Usar flex-wrap para responsividade */}
+        <Select value={selectedPeriod} onValueChange={(value: FilterPeriod) => setSelectedPeriod(value)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Selecionar Período" />
+          </SelectTrigger>
+          <SelectContent>
+            {periodOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Botão "Ajustar Comparações" */}
         {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
@@ -425,7 +402,6 @@ const Dashboard = () => {
             onPressedChange={setIsAdjustingComparisons}
             aria-label="Toggle ajustar comparações"
             className={cn(
-              "ml-4",
               isAdjustingComparisons && "!bg-green-500 !text-white hover:!bg-green-600"
             )}
           >
