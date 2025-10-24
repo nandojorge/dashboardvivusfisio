@@ -229,7 +229,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
       <CardHeader>
         <CardTitle>Contactos Recebidos</CardTitle>
         <CardDescription>
-          Número de registos ao longo do tempo para o período selecionado.
+          Número de contactos ao longo do tempo para o período selecionado.
         </CardDescription>
       </CardHeader>
       <CardContent className="h-[350px] p-4">
@@ -254,7 +254,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
               <YAxis allowDecimals={false} />
               <Tooltip
                 labelFormatter={(label) => formatDateLabel(label, groupUnit)}
-                formatter={(value: number) => [`${value} registos`, "Total"]}
+                formatter={(value: number) => [`${value} contactos`, "Total"]}
               />
               <Legend />
               <Line
@@ -262,7 +262,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
                 dataKey="count"
                 stroke="#8884d8"
                 activeDot={{ r: 8 }}
-                name="Registos"
+                name="Contactos"
               />
             </LineChart>
           </ResponsiveContainer>
