@@ -267,6 +267,16 @@ const Dashboard = () => {
     return (convertedLeadsCount / newContactsCount) * 100;
   }, [convertedLeadsCount, newContactsCount]);
 
+  // Calculate leads "Em Contacto" for the current period based on 'estadodalead' column
+  const leadsInContactCount = useMemo(() => {
+    return filteredLeads.filter(lead => lead.estadodalead === "Em Contacto").length;
+  }, [filteredLeads]);
+
+  const leadsInContactPercentage = useMemo(() => {
+    if (newContactsCount === 0) return 0;
+    return (leadsInContactCount / newContactsCount) * 100;
+  }, [leadsInContactCount, newContactsCount]);
+
 
   // Calculate previous period data for comparison
   const previousPeriodFilteredContacts = useMemo(() => {
@@ -480,6 +490,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{newContactsCount}</div>
+            {/* Removida a linha do período anterior para leads */}
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
@@ -494,7 +505,11 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            {/* Nova informação de Leads Convertidas */}
+            {/* Nova informação de Leads em Contacto */}
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
+            </p>
+            {/* Informação de Leads Convertidas */}
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads convertidas:</span> {convertedLeadsCount} ({convertedLeadsPercentage.toFixed(0)}%)
             </p>
