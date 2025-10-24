@@ -24,7 +24,7 @@ import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 
-type FilterPeriod = "today" | "week" | "month" | "year" | "all";
+type FilterPeriod = "today" | "7days" | "30days" | "60days" | "week" | "month" | "year" | "all";
 
 // Helper function to get the real-time cutoff date for a given period's start date
 const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
@@ -62,6 +62,18 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
       previousPeriodStart = subDays(now, 1);
       start = startOfDay(previousPeriodStart);
       end = endOfDay(previousPeriodStart);
+      break;
+    case "7days":
+      start = startOfDay(subDays(now, 14)); // 7 days before the last 7 days
+      end = endOfDay(subDays(now, 8)); // End of the day before the current 7-day period starts
+      break;
+    case "30days":
+      start = startOfDay(subDays(now, 60)); // 30 days before the last 30 days
+      end = endOfDay(subDays(now, 31)); // End of the day before the current 30-day period starts
+      break;
+    case "60days":
+      start = startOfDay(subDays(now, 120)); // 60 days before the last 60 days
+      end = endOfDay(subDays(now, 61)); // End of the day before the current 60-day period starts
       break;
     case "week":
       previousPeriodStart = subWeeks(now, 1);
@@ -101,6 +113,15 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
   switch (period) {
     case "today":
       return isToday(itemDate);
+    case "7days":
+      const sevenDaysAgo = subDays(now, 6); // Includes today
+      return isWithinInterval(itemDate, { start: startOfDay(sevenDaysAgo), end: endOfDay(now) });
+    case "30days":
+      const thirtyDaysAgo = subDays(now, 29); // Includes today
+      return isWithinInterval(itemDate, { start: startOfDay(thirtyDaysAgo), end: endOfDay(now) });
+    case "60days":
+      const sixtyDaysAgo = subDays(now, 59); // Includes today
+      return isWithinInterval(itemDate, { start: startOfDay(sixtyDaysAgo), end: endOfDay(now) });
     case "week":
       return isThisWeek(itemDate, { weekStartsOn: 0, locale: ptBR });
     case "month":
@@ -211,6 +232,12 @@ const Dashboard = () => {
     switch (period) {
       case "today":
         return "Hoje";
+      case "7days":
+        return "Últimos 7 Dias";
+      case "30days":
+        return "Últimos 30 Dias";
+      case "60days":
+        return "Últimos 60 Dias";
       case "week":
         return "Esta Semana";
       case "month":
@@ -228,6 +255,12 @@ const Dashboard = () => {
     switch (period) {
       case "today":
         return "Ontem";
+      case "7days":
+        return "7 Dias Anteriores";
+      case "30days":
+        return "30 Dias Anteriores";
+      case "60days":
+        return "60 Dias Anteriores";
       case "week":
         return "Semana Anterior";
       case "month":
@@ -293,12 +326,30 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold">Contactos Info</h1>
-      <div className="flex gap-2 mb-4 items-center">
+      <div className="flex gap-2 mb-4 items-center flex-wrap"> {/* Added flex-wrap for responsiveness */}
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
           onClick={() => { setSelectedPeriod("today"); }}
         >
           Hoje
+        </Button>
+        <Button
+          variant={selectedPeriod === "7days" ? "default" : "outline"}
+          onClick={() => { setSelectedPeriod("7days"); }}
+        >
+          7 Dias
+        </Button>
+        <Button
+          variant={selectedPeriod === "30days" ? "default" : "outline"}
+          onClick={() => { setSelectedPeriod("30days"); }}
+        >
+          30 Dias
+        </Button>
+        <Button
+          variant={selectedPeriod === "60days" ? "default" : "outline"}
+          onClick={() => { setSelectedPeriod("60days"); }}
+        >
+          60 Dias
         </Button>
         <Button
           variant={selectedPeriod === "week" ? "default" : "outline"}
