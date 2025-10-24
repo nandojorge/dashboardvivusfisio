@@ -6,7 +6,7 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
+  // CartesianGrid, // Removido para tirar o "xadrez"
   Tooltip,
   Legend,
   ResponsiveContainer,
@@ -244,14 +244,15 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
                 bottom: 0,
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              {/* <CartesianGrid strokeDasharray="3 3" /> */} {/* Removido */}
               <XAxis
                 dataKey="date"
                 tickFormatter={(value) => formatDateLabel(value, groupUnit)}
-                interval="preserveStartEnd" // Helps with label density
-                minTickGap={30} // Minimum gap between ticks
+                interval="preserveStartEnd"
+                minTickGap={30}
+                tick={{ fontSize: 12 }} // Tamanho da fonte menor
               />
-              <YAxis allowDecimals={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} /> {/* Tamanho da fonte menor */}
               <Tooltip
                 labelFormatter={(label) => formatDateLabel(label, groupUnit)}
                 formatter={(value: number) => [`${value} contactos`, "Total"]}
