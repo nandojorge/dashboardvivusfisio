@@ -207,11 +207,25 @@ const Dashboard = () => {
         assignedCounty = exampleCounties[Math.floor(Math.random() * exampleCounties.length)];
       }
 
+      let assignedStatus = item.status;
+      if (isLeadData) {
+        // Define statuses that count as "converted" for leads
+        const convertedStatuses = ["cliente", "ativo"]; // Example converted statuses (case-insensitive)
+        if (item.status && convertedStatuses.includes(item.status.toLowerCase())) {
+          // If the original status is one of the converted ones, keep it.
+          assignedStatus = item.status;
+        } else {
+          // Otherwise, it's still considered a "Lead" for this context.
+          assignedStatus = "Lead";
+        }
+      }
+      // For non-lead data (contacts), assignedStatus already holds item.status, which is fine.
+
       return {
         ...item,
         origemcontacto: assignedOrigin,
         concelho: assignedCounty,
-        status: isLeadData ? "Lead" : item.status, // Ensure leads have status "Lead"
+        status: assignedStatus, // Use the determined status
       };
     });
   };
@@ -242,6 +256,18 @@ const Dashboard = () => {
   const newContactsCount = useMemo(() => {
     return filteredLeads.length;
   }, [filteredLeads]);
+
+  // Calculate converted leads for the current period
+  const convertedLeadsCount = useMemo(() => {
+    const convertedStatuses = ["cliente", "ativo"];
+    return filteredLeads.filter(lead => lead.status && convertedStatuses.includes(lead.status.toLowerCase())).length;
+  }, [filteredLeads]);
+
+  const convertedLeadsPercentage = useMemo(() => {
+    if (newContactsCount === 0) return 0;
+    return (convertedLeadsCount / newContactsCount) * 100;
+  }, [convertedLeadsCount, newContactsCount]);
+
 
   // Calculate previous period data for comparison
   const previousPeriodFilteredContacts = useMemo(() => {
@@ -469,6 +495,10 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
+            {/* Nova informação de Leads Convertidas */}
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-foreground">Leads convertidas:</span> {convertedLeadsCount} ({convertedLeadsPercentage.toFixed(0)}%)
+            </p>
           </CardContent>
         </Card>
       </div>
