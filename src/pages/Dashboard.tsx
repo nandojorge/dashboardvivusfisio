@@ -24,7 +24,7 @@ import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 
-type FilterPeriod = "today" | "7days" | "30days" | "60days" | "week" | "month" | "year" | "all";
+type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 
 // Helper function to get the real-time cutoff date for a given period's start date
 const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
@@ -75,6 +75,10 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
       start = startOfDay(subDays(now, 120)); // 60 days before the last 60 days
       end = endOfDay(subDays(now, 61)); // End of the day before the current 60-day period starts
       break;
+    case "12months":
+      start = startOfDay(subMonths(now, 24)); // 12 months before the last 12 months
+      end = endOfDay(subMonths(now, 13)); // End of the day before the current 12-month period starts
+      break;
     case "week":
       previousPeriodStart = subWeeks(now, 1);
       start = startOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
@@ -122,6 +126,9 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
     case "60days":
       const sixtyDaysAgo = subDays(now, 59); // Includes today
       return isWithinInterval(itemDate, { start: startOfDay(sixtyDaysAgo), end: endOfDay(now) });
+    case "12months":
+      const twelveMonthsAgo = subMonths(now, 11); // Includes current month
+      return isWithinInterval(itemDate, { start: startOfDay(twelveMonthsAgo), end: endOfDay(now) });
     case "week":
       return isThisWeek(itemDate, { weekStartsOn: 0, locale: ptBR });
     case "month":
@@ -238,6 +245,8 @@ const Dashboard = () => {
         return "Últimos 30 Dias";
       case "60days":
         return "Últimos 60 Dias";
+      case "12months":
+        return "Últimos 12 Meses";
       case "week":
         return "Esta Semana";
       case "month":
@@ -261,6 +270,8 @@ const Dashboard = () => {
         return "30 Dias Anteriores";
       case "60days":
         return "60 Dias Anteriores";
+      case "12months":
+        return "12 Meses Anteriores";
       case "week":
         return "Semana Anterior";
       case "month":
@@ -350,6 +361,12 @@ const Dashboard = () => {
           onClick={() => { setSelectedPeriod("60days"); }}
         >
           60 Dias
+        </Button>
+        <Button
+          variant={selectedPeriod === "12months" ? "default" : "outline"}
+          onClick={() => { setSelectedPeriod("12months"); }}
+        >
+          12 Meses
         </Button>
         <Button
           variant={selectedPeriod === "week" ? "default" : "outline"}
