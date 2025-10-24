@@ -491,21 +491,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{newContactsCount}</div>
             {/* Removida a linha do período anterior para leads */}
-            {selectedPeriod !== "all" && (
-              <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
-                  {previousPeriodNewContactsCount}
-                </span>
-                {getTrendIcon(newContactsCount, previousPeriodNewContactsCount)}
-              </p>
-            )}
-            {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
-              </p>
-            )}
-            {/* Nova informação de Leads em Contacto */}
+            {/* Informação de Leads em Contacto */}
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
             </p>
