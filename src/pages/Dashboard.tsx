@@ -342,7 +342,7 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex gap-2 mb-4 items-center flex-wrap"> {/* Added flex-wrap for responsiveness */}
+      <div className="flex gap-2 mb-4 items-center flex-nowrap overflow-x-auto hide-scrollbar"> {/* Alterado aqui */}
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
           onClick={() => { setSelectedPeriod("today"); }}
