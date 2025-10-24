@@ -414,9 +414,9 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3">
         {/* Cartão de Total de Contactos */}
-        <Card className="min-w-[280px] flex-shrink-0">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total de Contactos
@@ -448,7 +448,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Cartão de Total de Leads */}
-        <Card className="min-w-[280px] flex-shrink-0">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total de Leads
