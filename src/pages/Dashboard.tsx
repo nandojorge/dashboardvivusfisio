@@ -506,7 +506,7 @@ const Dashboard = () => {
 
       {/* Registration Trend Chart */}
       <RegistrationTrendChart
-        contacts={contactsData ? [...contactsData, ...(leadsData || [])] : []} // Pass all raw data
+        data={combinedFilteredData} // Pass already filtered data
         selectedPeriod={selectedPeriod}
         isAdjustingComparisons={isAdjustingComparisons}
       />
