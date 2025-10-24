@@ -257,10 +257,9 @@ const Dashboard = () => {
     return filteredLeads.length;
   }, [filteredLeads]);
 
-  // Calculate converted leads for the current period
+  // Calculate converted leads for the current period based on 'conversao' column
   const convertedLeadsCount = useMemo(() => {
-    const convertedStatuses = ["cliente", "ativo"];
-    return filteredLeads.filter(lead => lead.status && convertedStatuses.includes(lead.status.toLowerCase())).length;
+    return filteredLeads.filter(lead => lead.conversao === "Lead Convertida").length;
   }, [filteredLeads]);
 
   const convertedLeadsPercentage = useMemo(() => {
