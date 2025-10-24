@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Users, Menu, UserPlus } from "lucide-react"; // Removed Stethoscope
+import { Users, Menu } from "lucide-react"; // Removed UserPlus
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Users, label: "Contactos", path: "/" }, // Changed label to Contactos and icon to Users
-  { icon: UserPlus, label: "Leads", path: "/leads" }, // New item for Leads
+  // Removed { icon: UserPlus, label: "Leads", path: "/leads" }, // New item for Leads
 ];
 
 export const Sidebar = () => {
