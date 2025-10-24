@@ -209,8 +209,8 @@ const Dashboard = () => {
   }, [filteredContacts]);
 
   const activeContactsCount = useMemo(() => {
-    // Convert 'arquivado' to lowercase for case-insensitive comparison
-    return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "não").length;
+    // Convert 'arquivado' to lowercase for case-insensitive comparison with "nao"
+    return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "nao").length;
   }, [filteredContacts]);
 
   const newContactsCount = useMemo(() => {
