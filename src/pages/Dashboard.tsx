@@ -208,6 +208,10 @@ const Dashboard = () => {
     return filteredContacts.length;
   }, [filteredContacts]);
 
+  const activeContactsCount = useMemo(() => {
+    return filteredContacts.filter(contact => contact.arquivado === "Não").length;
+  }, [filteredContacts]);
+
   const newContactsCount = useMemo(() => {
     return filteredContacts.filter(contact => contact.status === "Lead").length;
   }, [filteredContacts]);
@@ -436,6 +440,9 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-foreground">Ativos:</span> {activeContactsCount}
+            </p>
           </CardContent>
         </Card>
 
