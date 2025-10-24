@@ -45,6 +45,11 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
     const now = new Date();
     const combinedRawData = [...contacts, ...leads];
 
+    // If "all" period is selected, return empty data to hide the chart
+    if (selectedPeriod === "all") {
+      return { chartData: [], groupUnit: 'day' };
+    }
+
     // 1. Determine the actual min and max dates from ALL raw data
     let minOverallDataDate: Date | null = null;
     let maxOverallDataDate: Date | null = null;
@@ -77,10 +82,19 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
 
     switch (selectedPeriod) {
       case "today":
-      case "7days":
-      case "30days":
-      case "60days":
         finalIntervalStart = startOfDay(subDays(now, 19)); // Last 20 days (today + 19 previous days)
+        finalGroupUnit = 'day';
+        break;
+      case "7days":
+        finalIntervalStart = startOfDay(subDays(now, 6)); // Last 7 days (today + 6 previous days)
+        finalGroupUnit = 'day';
+        break;
+      case "30days":
+        finalIntervalStart = startOfDay(subDays(now, 29)); // Last 30 days (today + 29 previous days)
+        finalGroupUnit = 'day';
+        break;
+      case "60days":
+        finalIntervalStart = startOfDay(subDays(now, 59)); // Last 60 days (today + 59 previous days)
         finalGroupUnit = 'day';
         break;
       case "week":
@@ -88,22 +102,16 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
         finalGroupUnit = 'week';
         break;
       case "month":
-      case "12months":
         finalIntervalStart = startOfMonth(subMonths(now, 19)); // Last 20 months (current month + 19 previous months)
+        finalGroupUnit = 'month';
+        break;
+      case "12months":
+        finalIntervalStart = startOfMonth(subMonths(now, 11)); // Last 12 months (current month + 11 previous months)
         finalGroupUnit = 'month';
         break;
       case "year":
         finalIntervalStart = startOfYear(minOverallDataDate); // All years from the earliest record
         finalGroupUnit = 'year';
-        break;
-      case "all":
-        finalIntervalStart = startOfMonth(minOverallDataDate); // From the beginning of the month of the earliest contact
-        const diffInYears = differenceInYears(intervalEnd, finalIntervalStart);
-        if (diffInYears >= 2) { // If range is 2 years or more, group by year
-          finalGroupUnit = 'year';
-        } else { // Otherwise, group by month
-          finalGroupUnit = 'month';
-        }
         break;
       default:
         finalIntervalStart = startOfDay(subDays(now, 19)); // Default to last 20 days
