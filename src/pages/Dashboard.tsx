@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getContacts } from "@/api/contacts";
+import { getContacts, getLeads } from "@/api/contacts"; // Importar getLeads
 import { Contact } from "@/types/contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,7 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
   return { start, end };
 };
 
-// Helper function to filter items (contacts) by period
+// Helper function to filter items (contacts/leads) by period
 const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
   const now = new Date();
   switch (period) {
@@ -146,22 +146,38 @@ const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
   const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
 
-  const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
+  const { data: contactsData, isLoading: isLoadingContacts, isError: isErrorContacts, error: errorContacts } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
     queryFn: getContacts,
   });
+
+  const { data: leadsData, isLoading: isLoadingLeads, isError: isErrorLeads, error: errorLeads } = useQuery<Contact[], Error>({
+    queryKey: ["leads"],
+    queryFn: getLeads,
+  });
+
+  const isLoading = isLoadingContacts || isLoadingLeads;
+  const isError = isErrorContacts || isErrorLeads;
+  const error = errorContacts || errorLeads; // Simplistic error handling, could be improved
 
   // Define origins in lowercase for consistency
   const origins = ["website", "referral", "social media", "email marketing", "direct"];
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
-  const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
-    if (!allContacts) return [];
-    return allContacts.filter((contact) => {
+  // Helper function to filter and process items (contacts or leads)
+  const filterAndProcessItems = (
+    items: Contact[] | undefined,
+    periodFilterFn: (itemDate: Date) => boolean,
+    isLeadData: boolean = false
+  ) => {
+    if (!items) return [];
+    return items.filter((item) => {
       let itemDateString: string | undefined;
-      if ('dataregisto' in contact) {
-        itemDateString = contact.dataregisto;
+      if (isLeadData && item.datacontactolead) { // Prioritize datacontactolead for leads
+        itemDateString = item.datacontactolead;
+      } else if (item.dataregisto) {
+        itemDateString = item.dataregisto;
       }
 
       if (!itemDateString || typeof itemDateString !== 'string') {
@@ -169,76 +185,78 @@ const Dashboard = () => {
       }
       const itemDate = parseISO(itemDateString);
       if (isNaN(itemDate.getTime())) {
-        console.warn(`Invalid date string for contact ${contact.id}: ${itemDateString}`);
+        console.warn(`Invalid date string for item ${item.id}: ${itemDateString}`);
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map((contact) => {
-      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
+    }).map((item) => {
+      let assignedOrigin = item.origemcontacto ? item.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
-      let assignedCounty = contact.concelho ? contact.concelho : '';
+      let assignedCounty = item.concelho ? item.concelho : '';
       if (!assignedCounty) {
         assignedCounty = exampleCounties[Math.floor(Math.random() * exampleCounties.length)];
       }
 
       return {
-        ...contact,
+        ...item,
         origemcontacto: assignedOrigin,
-        concelho: assignedCounty, // Atribuir concelho
+        concelho: assignedCounty,
+        status: isLeadData ? "Lead" : item.status, // Ensure leads have status "Lead"
       };
     });
   };
 
   const filteredContacts = useMemo(() => {
-    return processContactsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
-  }, [contacts, selectedPeriod]);
+    return filterAndProcessItems(contactsData, (contactDate) => getPeriodFilter(contactDate, selectedPeriod), false);
+  }, [contactsData, selectedPeriod]);
 
-  // Calculate previous period contacts (actual objects)
-  const previousPeriodContacts = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return [];
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }));
-  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+  const filteredLeads = useMemo(() => {
+    return filterAndProcessItems(leadsData, (leadDate) => getPeriodFilter(leadDate, selectedPeriod), true);
+  }, [leadsData, selectedPeriod]);
+
+  // Combine filtered contacts and leads for charts that need all data
+  const combinedFilteredData = useMemo(() => {
+    return [...filteredContacts, ...filteredLeads];
+  }, [filteredContacts, filteredLeads]);
 
   const totalContactsCount = useMemo(() => {
-    return filteredContacts.length;
-  }, [filteredContacts]);
+    return filteredContacts.length + filteredLeads.length;
+  }, [filteredContacts, filteredLeads]);
 
   const activeContactsCount = useMemo(() => {
-    // Convert 'arquivado' to lowercase for case-insensitive comparison with "nao"
+    // Active contacts are typically from the 'contactos' endpoint, not leads
     return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "nao").length;
   }, [filteredContacts]);
 
   const newContactsCount = useMemo(() => {
-    return filteredContacts.filter(contact => contact.status === "Lead").length;
-  }, [filteredContacts]);
+    return filteredLeads.length;
+  }, [filteredLeads]);
+
+  // Calculate previous period data for comparison
+  const previousPeriodFilteredContacts = useMemo(() => {
+    if (!contactsData || selectedPeriod === "all") return [];
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
+    return filterAndProcessItems(contactsData, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }), false);
+  }, [contactsData, selectedPeriod, isAdjustingComparisons]);
+
+  const previousPeriodFilteredLeads = useMemo(() => {
+    if (!leadsData || selectedPeriod === "all") return [];
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
+    return filterAndProcessItems(leadsData, (leadDate) => isWithinInterval(leadDate, { start: start, end: end }), true);
+  }, [leadsData, selectedPeriod, isAdjustingComparisons]);
 
   const previousPeriodTotalContactsCount = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return 0;
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return contacts.filter((contact) => {
-      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
-      const contactDate = parseISO(contact.dataregisto);
-      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
-    }).length;
-  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+    return previousPeriodFilteredContacts.length + previousPeriodFilteredLeads.length;
+  }, [previousPeriodFilteredContacts, previousPeriodFilteredLeads]);
 
   const previousPeriodNewContactsCount = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return 0;
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return contacts.filter((contact) => {
-      if (contact.status !== "Lead") return false;
-      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
-      const contactDate = parseISO(contact.dataregisto);
-      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
-    }).length;
-  }, [contacts, selectedPeriod, isAdjustingComparisons]);
+    return previousPeriodFilteredLeads.length;
+  }, [previousPeriodFilteredLeads]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -342,7 +360,7 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex gap-2 mb-4 items-center flex-nowrap overflow-x-auto hide-scrollbar"> {/* Alterado aqui */}
+      <div className="flex gap-2 mb-4 items-center flex-nowrap overflow-x-auto hide-scrollbar">
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
           onClick={() => { setSelectedPeriod("today"); }}
@@ -479,22 +497,22 @@ const Dashboard = () => {
 
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
-        currentContacts={filteredContacts}
-        previousContacts={previousPeriodContacts}
+        currentContacts={combinedFilteredData}
+        previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
         selectedPeriod={selectedPeriod}
       />
 
       {/* Registration Trend Chart */}
       <RegistrationTrendChart
-        contacts={contacts || []}
+        contacts={contactsData ? [...contactsData, ...(leadsData || [])] : []} // Pass all raw data
         selectedPeriod={selectedPeriod}
         isAdjustingComparisons={isAdjustingComparisons}
       />
 
       {/* Contact County Bar Chart */}
       <ContactCountyBarChart
-        currentContacts={filteredContacts}
-        previousContacts={previousPeriodContacts}
+        currentContacts={combinedFilteredData}
+        previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
         selectedPeriod={selectedPeriod}
       />
     </div>
