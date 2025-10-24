@@ -222,9 +222,10 @@ const Dashboard = () => {
     return [...filteredContacts, ...filteredLeads];
   }, [filteredContacts, filteredLeads]);
 
+  // MODIFIED: totalContactsCount now only includes filteredContacts
   const totalContactsCount = useMemo(() => {
-    return filteredContacts.length + filteredLeads.length;
-  }, [filteredContacts, filteredLeads]);
+    return filteredContacts.length;
+  }, [filteredContacts]);
 
   const activeContactsCount = useMemo(() => {
     // Active contacts are typically from the 'contactos' endpoint, not leads
@@ -250,9 +251,10 @@ const Dashboard = () => {
     return filterAndProcessItems(leadsData, (leadDate) => isWithinInterval(leadDate, { start: start, end: end }), true);
   }, [leadsData, selectedPeriod, isAdjustingComparisons]);
 
+  // MODIFIED: previousPeriodTotalContactsCount now only includes previousPeriodFilteredContacts
   const previousPeriodTotalContactsCount = useMemo(() => {
-    return previousPeriodFilteredContacts.length + previousPeriodFilteredLeads.length;
-  }, [previousPeriodFilteredContacts, previousPeriodFilteredLeads]);
+    return previousPeriodFilteredContacts.length;
+  }, [previousPeriodFilteredContacts]);
 
   const previousPeriodNewContactsCount = useMemo(() => {
     return previousPeriodFilteredLeads.length;
