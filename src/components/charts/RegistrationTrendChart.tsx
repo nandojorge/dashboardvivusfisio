@@ -21,7 +21,7 @@ import {
   format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
   isBefore, isSameDay, addDays, isAfter, differenceInYears, addYears, addMonths, addWeeks
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR } = from "date-fns/locale";
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 type GroupUnit = 'day' | 'week' | 'month' | 'year';
@@ -37,6 +37,11 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
   allLeads,
   selectedPeriod,
 }) => {
+  // If "all" period is selected, do not render the component at all
+  if (selectedPeriod === "all") {
+    return null;
+  }
+
   const processDataForChart = (
     contacts: Contact[],
     leads: Contact[],
@@ -44,11 +49,6 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
   ) => {
     const now = new Date();
     const combinedRawData = [...contacts, ...leads];
-
-    // If "all" period is selected, return empty data to hide the chart
-    if (selectedPeriod === "all") {
-      return { chartData: [], groupUnit: 'day' };
-    }
 
     // 1. Determine the actual min and max dates from ALL raw data
     let minOverallDataDate: Date | null = null;
