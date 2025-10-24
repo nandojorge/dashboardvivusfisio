@@ -21,7 +21,7 @@ import {
   format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
   isBefore, isSameDay, addDays, isAfter, differenceInYears, addYears, addMonths, addWeeks
 } from "date-fns";
-import { ptBR } = from "date-fns/locale";
+import { ptBR } from "date-fns/locale";
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 type GroupUnit = 'day' | 'week' | 'month' | 'year';
