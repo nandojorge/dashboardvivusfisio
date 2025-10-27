@@ -169,8 +169,8 @@ const Dashboard = () => {
   const error = errorContacts || errorLeads; // Simplistic error handling, could be improved
 
   // Define origins in lowercase for consistency
-  // Removido 'referral', 'direct' e 'social media' para evitar atribuição aleatória se não houver dados explícitos.
-  const origins = ["website", "email marketing"];
+  // A lista de origens aleatórias está agora vazia.
+  const origins: string[] = [];
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
@@ -201,7 +201,11 @@ const Dashboard = () => {
     }).map((item) => {
       let assignedOrigin = item.origemcontacto ? item.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
-        assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
+        if (origins.length > 0) {
+          assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
+        } else {
+          assignedOrigin = "desconhecida"; // Fallback se não houver origem explícita e a lista de aleatórias estiver vazia
+        }
       }
 
       let assignedCounty = item.concelho ? item.concelho : '';
