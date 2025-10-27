@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
-import { CardContent } from "@/components/ui/card"; // CardHeader e Card removidos
+import { CardContent } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp, TrendingDown } from "lucide-react"; // Importar para o tooltip
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils"; // Importar cn
 
 interface ContactOriginBarChartProps {
-  currentContacts: Contact[]; // Contactos do período atual
-  previousContacts: Contact[]; // Contactos do período anterior
+  currentContacts: Contact[];
+  previousContacts: Contact[];
   selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
@@ -58,14 +59,13 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
     const allOrigins = Array.from(new Set([...Object.keys(currentCounts), ...Object.keys(previousCounts)]));
 
     const chartData = allOrigins
-      .filter(origin => origin !== 'desconhecida') // Filter out 'desconhecida'
+      .filter(origin => origin !== 'desconhecida')
       .map(origin => ({
         name: origin,
         currentValue: currentCounts[origin] || 0,
         previousValue: previousCounts[origin] || 0,
       }));
 
-    // Sort the data by current value in descending order, then by name alphabetically
     chartData.sort((a, b) => {
       if (b.currentValue !== a.currentValue) {
         return b.currentValue - a.currentValue;
@@ -81,13 +81,13 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
 
     if (value === 0) return null;
 
-    const offset = 8; // Espaçamento do lado de fora da barra
+    const offset = 8;
     return (
       <text
-        x={x + width + offset} // Move o texto para fora da barra, à direita
+        x={x + width + offset}
         y={y + height / 2}
-        fill="hsl(var(--foreground))" // Cor do texto para o valor
-        textAnchor="start" // Alinha o texto para começar a partir da posição x
+        fill="hsl(var(--foreground))"
+        textAnchor="start"
         dominantBaseline="middle"
         className="text-sm font-semibold"
       >
@@ -162,8 +162,8 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
               left: 100,
               bottom: 5,
             }}
-            barGap={4} // Espaçamento entre as barras de cada categoria (mantido)
-            barCategoryGap={40} // Espaçamento entre as categorias (aumentado para 40)
+            barGap={4}
+            barCategoryGap={40}
           >
             <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
             <YAxis

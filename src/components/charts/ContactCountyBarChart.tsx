@@ -2,11 +2,11 @@
 
 import React, { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts";
-import { CardContent } from "@/components/ui/card"; // CardHeader e Card removidos
+import { CardContent } from "@/components/ui/card";
 import { Contact } from "@/types/contact";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"; // Importar cn
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { ptBR } from "date-fns/locale"; // Importar locale para consistência
+import { ptBR } from "date-fns/locale";
 
 interface ContactCountyBarChartProps {
   currentContacts: Contact[];
@@ -50,12 +50,12 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({
   const processData = (contacts: Contact[]) => {
     const countyCounts: { [key: string]: number } = {};
     contacts.forEach((contact) => {
-      const county = contact.concelho || "Desconhecido"; // Keep "Desconhecido" for processing, but filter out later if needed
+      const county = contact.concelho || "Desconhecido";
       countyCounts[county] = (countyCounts[county] || 0) + 1;
     });
     return Object.entries(countyCounts)
       .map(([county, count]) => ({ county, count }))
-      .filter(item => item.county !== "Desconhecido") // Filter out "Desconhecido" here
+      .filter(item => item.county !== "Desconhecido")
       .sort((a, b) => b.count - a.count);
   };
 
@@ -91,13 +91,13 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({
 
     if (value === 0) return null;
 
-    const offset = 8; // Espaçamento do lado de fora da barra
+    const offset = 8;
     return (
       <text
-        x={x + width + offset} // Move o texto para fora da barra, à direita
+        x={x + width + offset}
         y={y + height / 2}
-        fill="hsl(var(--foreground))" // Cor do texto para o valor
-        textAnchor="start" // Alinha o texto para começar a partir da posição x
+        fill="hsl(var(--foreground))"
+        textAnchor="start"
         dominantBaseline="middle"
         className="text-sm font-semibold"
       >
