@@ -170,7 +170,8 @@ const Dashboard = () => {
 
   // Define origins in lowercase for consistency
   // A lista de origens aleatórias está agora vazia.
-  const origins: string[] = [];
+  const origins: string[] = []; // Esta lista está vazia
+
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
@@ -201,10 +202,13 @@ const Dashboard = () => {
     }).map((item) => {
       let assignedOrigin = item.origemcontacto ? item.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
+        // Se assignedOrigin estiver vazio (ou seja, item.origemcontacto era vazio/null/undefined)
+        // E a lista 'origins' estiver vazia (origins.length === 0)
+        // Então, assignedOrigin será definido como "desconhecida"
         if (origins.length > 0) {
           assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
         } else {
-          assignedOrigin = "desconhecida"; // Fallback se não houver origem explícita e a lista de aleatórias estiver vazia
+          assignedOrigin = "desconhecida"; // <-- É aqui que "desconhecida" é atribuída
         }
       }
 
