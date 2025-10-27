@@ -96,7 +96,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ currentCo
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <CardTitle>Contactos por Origem</CardTitle>
+        {/* <CardTitle>Contactos por Origem</CardTitle> */} {/* Título removido */}
       </CardHeader>
       <CardContent style={{ height: dynamicChartHeight }} className="p-4">
         {data.length > 0 ? (
