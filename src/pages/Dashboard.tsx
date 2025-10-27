@@ -169,8 +169,8 @@ const Dashboard = () => {
   const error = errorContacts || errorLeads; // Simplistic error handling, could be improved
 
   // Define origins in lowercase for consistency
-  // Removido 'referral' para evitar atribuição aleatória se não houver dados explícitos.
-  const origins = ["website", "social media", "email marketing", "direct"];
+  // Removido 'referral' e 'direct' para evitar atribuição aleatória se não houver dados explícitos.
+  const origins = ["website", "social media", "email marketing"];
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
