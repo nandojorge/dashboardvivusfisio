@@ -168,10 +168,6 @@ const Dashboard = () => {
   const isError = isErrorContacts || isErrorLeads;
   const error = errorContacts || errorLeads; // Simplistic error handling, could be improved
 
-  // Define origins in lowercase for consistency
-  // A lista de origens aleatórias está agora vazia.
-  const origins: string[] = []; // Esta lista está vazia
-
   // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
@@ -198,19 +194,19 @@ const Dashboard = () => {
         console.warn(`Invalid date string for item ${item.id}: ${itemDateString}`);
         return false;
       }
-      return periodFilterFn(itemDate);
-    }).map((item) => {
-      let assignedOrigin = item.origemcontacto ? item.origemcontacto.toLowerCase() : '';
-      if (!assignedOrigin) {
-        // Se assignedOrigin estiver vazio (ou seja, item.origemcontacto era vazio/null/undefined)
-        // E a lista 'origins' estiver vazia (origins.length === 0)
-        // Então, assignedOrigin será definido como "desconhecida"
-        if (origins.length > 0) {
-          assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
-        } else {
-          assignedOrigin = "desconhecida"; // <-- É aqui que "desconhecida" é atribuída
-        }
+      if (!periodFilterFn(itemDate)) {
+        return false; // Apply date filter
       }
+
+      // NEW: Filter out items with empty origemcontacto
+      if (!item.origemcontacto || item.origemcontacto.trim() === '') {
+        return false;
+      }
+
+      return true; // If it passes all filters
+    }).map((item) => {
+      // Now, item.origemcontacto is guaranteed to exist and not be empty
+      let assignedOrigin = item.origemcontacto.toLowerCase();
 
       let assignedCounty = item.concelho ? item.concelho : '';
       if (!assignedCounty) {
