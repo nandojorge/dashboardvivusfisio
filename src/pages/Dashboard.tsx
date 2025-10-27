@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getContacts, getLeads } from "@/api/contacts"; // Importar getLeads
+import { getContacts, getLeads } from "@/api/contacts";
 import { Contact } from "@/types/contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,8 @@ import {
   isBefore, isSameDay, addDays
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-// import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart"; // Removido
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-// import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart"; // Removido
-import { ContactBarChartSwitcher } from "@/components/charts/ContactBarChartSwitcher"; // Novo import
+import { ContactBarChartSwitcher } from "@/components/charts/ContactBarChartSwitcher";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -30,7 +28,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Importar componentes Select
+} from "@/components/ui/select";
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 
@@ -40,22 +38,19 @@ const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "
 
   switch (selectedPeriod) {
     case "week":
-      // Cutoff is the same day of the week as 'now' within the 'periodStartDate' week
-      const currentDayOfWeek = getDay(now); // 0 (Sun) - 6 (Sat)
+      const currentDayOfWeek = getDay(now);
       cutoffDate = addDays(startOfWeek(periodStartDate, { weekStartsOn: 0, locale: ptBR }), currentDayOfWeek);
-      return endOfDay(cutoffDate); // Include the entire cutoff day
+      return endOfDay(cutoffDate);
     case "month":
-      // Cutoff is the same day of the month as 'now' within the 'periodStartDate' month
       const currentDayOfMonth = getDate(now);
       cutoffDate = setDate(startOfMonth(periodStartDate), currentDayOfMonth);
       return endOfDay(cutoffDate);
     case "year":
-      // Cutoff is the same day of the year as 'now' within the 'periodStartDate' year
       const currentDayOfYear = getDayOfYear(now);
       cutoffDate = setDayOfYear(startOfYear(periodStartDate), currentDayOfYear);
       return endOfDay(cutoffDate);
     default:
-      return now; // Should not be reached for these periods
+      return now;
   }
 };
 
@@ -72,20 +67,20 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
       end = endOfDay(previousPeriodStart);
       break;
     case "7days":
-      start = startOfDay(subDays(now, 14)); // 7 days before the last 7 days
-      end = endOfDay(subDays(now, 8)); // End of the day before the current 7-day period starts
+      start = startOfDay(subDays(now, 14));
+      end = endOfDay(subDays(now, 8));
       break;
     case "30days":
-      start = startOfDay(subDays(now, 60)); // 30 days before the last 30 days
-      end = endOfDay(subDays(now, 31)); // End of the day before the current 30-day period starts
+      start = startOfDay(subDays(now, 60));
+      end = endOfDay(subDays(now, 31));
       break;
     case "60days":
-      start = startOfDay(subDays(now, 120)); // 60 days before the last 60 days
-      end = endOfDay(subDays(now, 61)); // End of the day before the current 60-day period starts
+      start = startOfDay(subDays(now, 120));
+      end = endOfDay(subDays(now, 61));
       break;
     case "12months":
-      start = startOfDay(subMonths(now, 24)); // 12 months before the last 12 months
-      end = endOfDay(subMonths(now, 13)); // End of the day before the current 12-month period starts
+      start = startOfDay(subMonths(now, 24));
+      end = endOfDay(subMonths(now, 13));
       break;
     case "week":
       previousPeriodStart = subWeeks(now, 1);
@@ -112,7 +107,7 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdj
       }
       break;
     case "all":
-      return { start: new Date(0), end: now }; // "All" period doesn't have a "previous" in this context
+      return { start: new Date(0), end: now };
     default:
       return { start: now, end: now };
   }
@@ -126,16 +121,16 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
     case "today":
       return isToday(itemDate);
     case "7days":
-      const sevenDaysAgo = subDays(now, 6); // Includes today
+      const sevenDaysAgo = subDays(now, 6);
       return isWithinInterval(itemDate, { start: startOfDay(sevenDaysAgo), end: endOfDay(now) });
     case "30days":
-      const thirtyDaysAgo = subDays(now, 29); // Includes today
+      const thirtyDaysAgo = subDays(now, 29);
       return isWithinInterval(itemDate, { start: startOfDay(thirtyDaysAgo), end: endOfDay(now) });
     case "60days":
-      const sixtyDaysAgo = subDays(now, 59); // Includes today
+      const sixtyDaysAgo = subDays(now, 59);
       return isWithinInterval(itemDate, { start: startOfDay(sixtyDaysAgo), end: endOfDay(now) });
     case "12months":
-      const twelveMonthsAgo = subMonths(now, 11); // Includes current month
+      const twelveMonthsAgo = subMonths(now, 11);
       return isWithinInterval(itemDate, { start: startOfDay(twelveMonthsAgo), end: endOfDay(now) });
     case "week":
       return isThisWeek(itemDate, { weekStartsOn: 0, locale: ptBR });
@@ -166,9 +161,8 @@ const Dashboard = () => {
 
   const isLoading = isLoadingContacts || isLoadingLeads;
   const isError = isErrorContacts || isErrorLeads;
-  const error = errorContacts || errorLeads; // Simplistic error handling, could be improved
+  const error = errorContacts || errorLeads;
 
-  // Define some example counties for demonstration if 'concelho' is missing
   const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
   // Helper function to filter and process items (contacts or leads)
@@ -180,7 +174,7 @@ const Dashboard = () => {
     if (!items) return [];
     return items.filter((item) => {
       let itemDateString: string | undefined;
-      if (isLeadData && item.datacontactolead) { // Prioritize datacontactolead for leads
+      if (isLeadData && item.datacontactolead) {
         itemDateString = item.datacontactolead;
       } else if (item.dataregisto) {
         itemDateString = item.dataregisto;
@@ -194,19 +188,12 @@ const Dashboard = () => {
         console.warn(`Invalid date string for item ${item.id}: ${itemDateString}`);
         return false;
       }
-      if (!periodFilterFn(itemDate)) {
-        return false; // Apply date filter
-      }
-
-      // NEW: Filter out items with empty origemcontacto
-      if (!item.origemcontacto || item.origemcontacto.trim() === '') {
-        return false;
-      }
-
-      return true; // If it passes all filters
+      return periodFilterFn(itemDate); // Only apply date filter
     }).map((item) => {
-      // Now, item.origemcontacto is guaranteed to exist and not be empty
-      let assignedOrigin = item.origemcontacto.toLowerCase();
+      // Ensure assignedOrigin always has a value, even if empty in source
+      let assignedOrigin = item.origemcontacto && item.origemcontacto.trim() !== ''
+        ? item.origemcontacto.toLowerCase()
+        : "desconhecida"; // Assign "desconhecida" if empty or null
 
       let assignedCounty = item.concelho ? item.concelho : '';
       if (!assignedCounty) {
@@ -215,23 +202,19 @@ const Dashboard = () => {
 
       let assignedStatus = item.status;
       if (isLeadData) {
-        // Define statuses that count as "converted" for leads
-        const convertedStatuses = ["cliente", "ativo"]; // Example converted statuses (case-insensitive)
+        const convertedStatuses = ["cliente", "ativo"];
         if (item.status && convertedStatuses.includes(item.status.toLowerCase())) {
-          // If the original status is one of the converted ones, keep it.
           assignedStatus = item.status;
         } else {
-          // Otherwise, it's still considered a "Lead" for this context.
           assignedStatus = "Lead";
         }
       }
-      // For non-lead data (contacts), assignedStatus already holds item.status, which is fine.
 
       return {
         ...item,
         origemcontacto: assignedOrigin,
         concelho: assignedCounty,
-        status: assignedStatus, // Use the determined status
+        status: assignedStatus,
       };
     });
   };
@@ -249,13 +232,11 @@ const Dashboard = () => {
     return [...filteredContacts, ...filteredLeads];
   }, [filteredContacts, filteredLeads]);
 
-  // MODIFIED: totalContactsCount now only includes filteredContacts
   const totalContactsCount = useMemo(() => {
     return filteredContacts.length;
   }, [filteredContacts]);
 
   const activeContactsCount = useMemo(() => {
-    // Active contacts are typically from the 'contactos' endpoint, not leads
     return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "nao").length;
   }, [filteredContacts]);
 
@@ -263,7 +244,6 @@ const Dashboard = () => {
     return filteredLeads.length;
   }, [filteredLeads]);
 
-  // Calculate converted leads for the current period based on 'conversao' column
   const convertedLeadsCount = useMemo(() => {
     return filteredLeads.filter(lead => lead.conversao === "Lead Convertida").length;
   }, [filteredLeads]);
@@ -273,7 +253,6 @@ const Dashboard = () => {
     return (convertedLeadsCount / newContactsCount) * 100;
   }, [convertedLeadsCount, newContactsCount]);
 
-  // Calculate leads "Em Contacto" for the current period based on 'estadodalead' column
   const leadsInContactCount = useMemo(() => {
     return filteredLeads.filter(lead => lead.estadodalead === "Em Contacto").length;
   }, [filteredLeads]);
@@ -299,7 +278,6 @@ const Dashboard = () => {
     return filterAndProcessItems(leadsData, (leadDate) => isWithinInterval(leadDate, { start: start, end: end }), true);
   }, [leadsData, selectedPeriod, isAdjustingComparisons]);
 
-  // MODIFIED: previousPeriodTotalContactsCount now only includes previousPeriodFilteredContacts
   const previousPeriodTotalContactsCount = useMemo(() => {
     return previousPeriodFilteredContacts.length;
   }, [previousPeriodFilteredContacts]);
@@ -422,7 +400,7 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex flex-wrap items-center gap-4 mb-4"> {/* Usar flex-wrap para responsividade */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
         <Select value={selectedPeriod} onValueChange={(value: FilterPeriod) => setSelectedPeriod(value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Selecionar Período" />
@@ -436,7 +414,6 @@ const Dashboard = () => {
           </SelectContent>
         </Select>
 
-        {/* Botão "Ajustar Comparações" */}
         {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
           <Toggle
             pressed={isAdjustingComparisons}
@@ -452,7 +429,6 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Cartão de Total de Contactos */}
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -484,7 +460,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Cartão de Total de Leads */}
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -501,11 +476,9 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            {/* Nova informação de Leads em Contacto */}
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
             </p>
-            {/* Informação de Leads Convertidas */}
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads convertidas:</span> {convertedLeadsCount} ({convertedLeadsPercentage.toFixed(0)}%)
             </p>
@@ -513,17 +486,15 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Contact Bar Chart Switcher */}
       <ContactBarChartSwitcher
         currentContacts={combinedFilteredData}
         previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
         selectedPeriod={selectedPeriod}
       />
 
-      {/* Registration Trend Chart */}
       <RegistrationTrendChart
-        allContacts={contactsData || []} // Pass raw contacts data
-        allLeads={leadsData || []}     // Pass raw leads data
+        allContacts={contactsData || []}
+        allLeads={leadsData || []}
         selectedPeriod={selectedPeriod}
       />
     </div>
