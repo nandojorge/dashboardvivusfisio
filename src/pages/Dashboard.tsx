@@ -18,9 +18,10 @@ import {
   isBefore, isSameDay, addDays
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+// import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart"; // Removido
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
+// import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart"; // Removido
+import { ContactBarChartSwitcher } from "@/components/charts/ContactBarChartSwitcher"; // Novo import
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -490,8 +491,12 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{newContactsCount}</div>
-            {/* Removida a linha do período anterior para leads */}
-            {/* Informação de Leads em Contacto */}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
+            {/* Nova informação de Leads em Contacto */}
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
             </p>
@@ -503,8 +508,8 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Contact Origin Bar Chart */}
-      <ContactOriginBarChart
+      {/* Contact Bar Chart Switcher */}
+      <ContactBarChartSwitcher
         currentContacts={combinedFilteredData}
         previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
         selectedPeriod={selectedPeriod}
@@ -514,13 +519,6 @@ const Dashboard = () => {
       <RegistrationTrendChart
         allContacts={contactsData || []} // Pass raw contacts data
         allLeads={leadsData || []}     // Pass raw leads data
-        selectedPeriod={selectedPeriod}
-      />
-
-      {/* Contact County Bar Chart */}
-      <ContactCountyBarChart
-        currentContacts={combinedFilteredData}
-        previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
         selectedPeriod={selectedPeriod}
       />
     </div>
