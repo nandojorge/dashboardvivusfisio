@@ -1,165 +1,148 @@
 "use client";
 
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Contact } from '@/types/contact';
-import { ptBR } from 'date-fns/locale';
+import React, { useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Contact } from "@/types/contact";
+import { cn } from "@/lib/utils";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface ContactCountyBarChartProps {
-  currentContacts: Contact[]; // Contactos do período atual
-  previousContacts: Contact[]; // Contactos do período anterior
-  selectedPeriod: "today" | "week" | "month" | "year" | "all";
+  currentContacts: Contact[];
+  previousContacts: Contact[];
+  selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
-const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ currentContacts, previousContacts, selectedPeriod }) => {
-  const capitalizeFirstLetter = (string: string) => {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
+const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({
+  currentContacts,
+  previousContacts,
+  selectedPeriod,
+}) => {
+  const processData = (contacts: Contact[]) => {
+    const countyCounts: { [key: string]: number } = {};
+    contacts.forEach((contact) => {
+      const county = contact.concelho || "Desconhecido";
+      countyCounts[county] = (countyCounts[county] || 0) + 1;
+    });
+    return Object.entries(countyCounts)
+      .map(([county, count]) => ({ county, count }))
+      .sort((a, b) => b.count - a.count);
   };
 
-  const getPreviousPeriodLabel = (period: string) => {
-    switch (period) {
-      case "today":
-        return "Ontem";
-      case "week":
-        return "Semana Anterior";
-      case "month":
-        return "Mês Anterior";
-      case "year":
-        return "Ano Anterior";
-      default:
-        return "Período Anterior";
-    }
-  };
+  const currentData = useMemo(() => processData(currentContacts), [currentContacts]);
+  const previousData = useMemo(() => processData(previousContacts), [previousContacts]);
 
-  const data = React.useMemo(() => {
-    const processCounts = (contactList: Contact[]) => {
-      const counts: { [key: string]: number } = {};
-      contactList.forEach(contact => {
-        const county = contact.concelho ? contact.concelho.toLowerCase() : 'desconhecido';
+  const data = useMemo(() => {
+    const combinedMap = new Map<string, { current: number; previous: number }>();
 
-        // Excluir "questionar cliente" e "sem informação"
-        if (county === 'questionar cliente' || county === 'sem informação') {
-          return;
-        }
-        counts[county] = (counts[county] || 0) + 1;
-      });
-      return counts;
-    };
-
-    const currentCounts = processCounts(currentContacts);
-    const previousCounts = processCounts(previousContacts);
-
-    const allCounties = Array.from(new Set([...Object.keys(currentCounts), ...Object.keys(previousCounts)]));
-
-    const chartData = allCounties.map(county => ({
-      name: county,
-      currentValue: currentCounts[county] || 0,
-      previousValue: previousCounts[county] || 0,
-    }));
-
-    // Sort the data by current value in descending order, then by name alphabetically
-    chartData.sort((a, b) => {
-      if (b.currentValue !== a.currentValue) {
-        return b.currentValue - a.currentValue;
-      }
-      return a.name.localeCompare(b.name);
+    currentData.forEach(item => {
+      combinedMap.set(item.county, { current: item.count, previous: 0 });
     });
 
-    return chartData;
-  }, [currentContacts, previousContacts]);
+    previousData.forEach(item => {
+      if (combinedMap.has(item.county)) {
+        combinedMap.get(item.county)!.previous = item.count;
+      } else {
+        combinedMap.set(item.county, { current: 0, previous: item.count });
+      }
+    });
 
-  const renderCustomizedLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
+    return Array.from(combinedMap.entries())
+      .map(([county, counts]) => ({
+        county,
+        "Período Atual": counts.current,
+        "Período Anterior": counts.previous,
+      }))
+      .sort((a, b) => b["Período Atual"] - a["Período Atual"]);
+  }, [currentData, previousData]);
 
-    if (value === 0) return null;
+  const dynamicChartHeight = Math.max(300, data.length * 40); // Minimum 300px, 40px per bar
 
-    const offset = 8; // Espaçamento do lado de fora da barra
-    return (
-      <text
-        x={x + width + offset} // Move o texto para fora da barra, à direita
-        y={y + height / 2}
-        fill="hsl(var(--foreground))" // Cor do texto para o valor
-        textAnchor="start" // Alinha o texto para começar a partir da posição x
-        dominantBaseline="middle"
-        className="text-sm font-semibold"
-      >
-        {value}
-      </text>
-    );
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const current = payload.find((p: any) => p.dataKey === "Período Atual");
+      const previous = payload.find((p: any) => p.dataKey === "Período Anterior");
+
+      const currentValue = current ? current.value : 0;
+      const previousValue = previous ? previous.value : 0;
+
+      const percentageChange = previousValue > 0 ? ((currentValue - previousValue) / previousValue) * 100 : (currentValue > 0 ? 100 : 0);
+
+      return (
+        <div className="rounded-lg border bg-background p-2 shadow-sm">
+          <div className="text-sm font-bold">{label}</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col">
+              <span className="text-[0.70rem] uppercase text-muted-foreground">Atual</span>
+              <span className="font-bold text-muted-foreground">{currentValue}</span>
+            </div>
+            {selectedPeriod !== "all" && (
+              <div className="flex flex-col">
+                <span className="text-[0.70rem] uppercase text-muted-foreground">Anterior</span>
+                <span className="font-bold text-muted-foreground">{previousValue}</span>
+              </div>
+            )}
+          </div>
+          {selectedPeriod !== "all" && (
+            <div className="flex items-center text-xs mt-1">
+              {percentageChange > 0 && <TrendingUp className="h-3 w-3 text-green-500 mr-1" />}
+              {percentageChange < 0 && <TrendingDown className="h-3 w-3 text-red-500 mr-1" />}
+              <span className={cn(
+                percentageChange > 0 && "text-green-500",
+                percentageChange < 0 && "text-red-500",
+                percentageChange === 0 && "text-muted-foreground"
+              )}>
+                {percentageChange.toFixed(1)}%
+              </span>
+              <span className="ml-1 text-muted-foreground">vs. Período Anterior</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
   };
-
-  const minCategoryHeight = 45;
-  const baseChartPadding = 100;
-  const dynamicChartHeight = data.length > 0
-    ? Math.max(150, data.length * minCategoryHeight + baseChartPadding)
-    : 150;
-
-  const maxTotalValue = Math.max(...data.flatMap(d => [d.currentValue, d.previousValue]), 0);
 
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <CardTitle>Contactos por Concelho</CardTitle>
+        {/* <CardTitle>Contactos por Concelho</CardTitle> */} {/* Título removido */}
       </CardHeader>
       <CardContent style={{ height: dynamicChartHeight }} className="p-4">
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              layout="vertical"
               data={data}
+              layout="vertical"
               margin={{
-                top: 20,
-                right: 20,
-                left: 100,
+                top: 5,
+                right: 30,
+                left: 20,
                 bottom: 5,
               }}
-              barGap={4} // Espaçamento entre as barras de cada categoria (mantido)
-              barCategoryGap={50} // Espaçamento entre as categorias (aumentado para 50)
             >
-              <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis
                 type="category"
-                dataKey="name"
+                dataKey="county"
+                stroke="#888888"
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                className="text-sm"
-                width={90}
-                interval={0}
-                tickFormatter={capitalizeFirstLetter}
+                width={100} // Adjust width for longer county names
               />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-                itemStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string) => [`${value}`, capitalizeFirstLetter(name)]}
-                labelFormatter={(label: string) => capitalizeFirstLetter(label)}
-              />
-              <Legend
-                wrapperStyle={{ paddingTop: '10px' }}
-                formatter={(value: string) => {
-                  if (value === 'currentValue') return `Período Atual`;
-                  if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
-                  return value;
-                }}
-              />
-              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
-              </Bar>
-              <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="previousValue" content={renderCustomizedLabel} />
-              </Bar>
+              <Tooltip content={<CustomTooltip selectedPeriod={selectedPeriod} />} />
+              <Legend />
+              <Bar dataKey="Período Atual" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              {selectedPeriod !== "all" && (
+                <Bar dataKey="Período Anterior" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+              )}
             </BarChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            Nenhum contacto para exibir por concelho neste período.
+            Não há dados de concelhos para o período selecionado.
           </div>
         )}
       </CardContent>
