@@ -213,7 +213,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 bottom: 5,
               }}
               barGap={4}
-              barCategoryGap={60} {/* Aumentado o espaçamento aqui */}
+              barCategoryGap={60}
             >
               <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
               <YAxis
