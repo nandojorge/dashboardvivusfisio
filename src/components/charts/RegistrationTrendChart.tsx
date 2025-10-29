@@ -69,13 +69,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
         dateFormat = 'MMM';
         break;
       case "all":
-        // Find the earliest date among all contacts and leads
-        const allDates = [
-          ...allContacts.map(c => c.dataregisto ? parseISO(c.dataregisto).getTime() : Infinity),
-          ...allLeads.map(l => (l.datacontactolead || l.dataregisto) ? parseISO(l.datacontactolead || l.dataregisto).getTime() : Infinity)
-        ].filter(time => time !== Infinity);
-
-        intervalStart = allDates.length > 0 ? new Date(Math.min(...allDates)) : now;
+        intervalStart = new Date(Math.min(...allContacts.map(c => parseISO(c.dataregisto).getTime()), ...allLeads.map(l => parseISO(l.datacontactolead || l.dataregisto).getTime())));
         intervalEnd = now;
         dateFormat = 'MMM yy';
         tickInterval = 'preserveStartEnd';
@@ -93,30 +87,16 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
     const { intervalStart, intervalEnd, dateFormat } = getIntervalAndFormat(selectedPeriod, now);
 
     const allItems = [
-      ...allContacts.flatMap(c => {
-        if (c.dataregisto && typeof c.dataregisto === 'string') {
-          const parsedDate = parseISO(c.dataregisto);
-          if (!isNaN(parsedDate.getTime())) {
-            return [{ date: parsedDate, type: 'contact' }];
-          }
-        }
-        return [];
-      }),
-      ...allLeads.flatMap(l => {
-        const dateString = l.datacontactolead || l.dataregisto;
-        if (dateString && typeof dateString === 'string') {
-          const parsedDate = parseISO(dateString);
-          if (!isNaN(parsedDate.getTime())) {
-            return [{ date: parsedDate, type: 'lead' }];
-          }
-        }
-        return [];
-      }),
+      ...allContacts.map(c => ({ date: parseISO(c.dataregisto), type: 'contact' })),
+      ...allLeads.map(l => ({ date: parseISO(l.datacontactolead || l.dataregisto), type: 'lead' })),
     ].filter(item => isWithinInterval(item.date, { start: intervalStart, end: intervalEnd }));
 
     let dates: Date[] = [];
     switch (selectedPeriod) {
       case "today":
+        // For 'today', we might want hourly data or just a single point for the day
+        // For simplicity, let's aggregate by day for now, or by hour if data is granular
+        // If data is not granular enough for hours, it will just show one point.
         dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
         break;
       case "7days":
@@ -137,12 +117,13 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
         dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
         break;
       case "all":
+        // Determine appropriate interval based on the span of "all" data
         const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
-        if (spanInDays <= 60) {
+        if (spanInDays <= 60) { // Up to 2 months, show by day
           dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
-        } else if (spanInDays <= 365 * 2) {
+        } else if (spanInDays <= 365 * 2) { // Up to 2 years, show by month
           dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
-        } else {
+        } else { // More than 2 years, show by year
           dates = eachYearOfInterval({ start: intervalStart, end: intervalEnd });
         }
         break;
@@ -154,7 +135,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     dates.forEach(date => {
       let key: string;
-      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      if (selectedPeriod === "today") {
+        key = format(date, 'yyyy-MM-dd'); // Aggregate by day for 'today' if no hourly data
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(date, 'yyyy-MM');
@@ -175,7 +158,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     allItems.forEach(item => {
       let key: string;
-      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      if (selectedPeriod === "today") {
+        key = format(item.date, 'yyyy-MM-dd');
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(item.date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(item.date, 'yyyy-MM');
