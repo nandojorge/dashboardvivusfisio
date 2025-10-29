@@ -488,8 +488,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CombinedBarCharts
-          currentContacts={combinedFilteredData}
-          previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
+          currentContacts={filteredContacts} {/* Alterado para usar apenas filteredContacts */}
+          previousContacts={previousPeriodFilteredContacts} {/* Alterado para usar apenas previousPeriodFilteredContacts */}
           currentLeads={filteredLeads}
           previousLeads={previousPeriodFilteredLeads}
           selectedPeriod={selectedPeriod}
