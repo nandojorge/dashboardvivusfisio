@@ -2,15 +2,16 @@
 
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Contact } from '@/types/contact';
 
 interface RegistrationTrendChartProps {
-  registrations: Contact[];
+  allContacts: Contact[];
+  allLeads: Contact[];
   selectedPeriod: "today" | "7days" | "30days" | "60days" | "12months" | "all";
 }
 
-const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registrations, selectedPeriod }) => {
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allContacts, allLeads, selectedPeriod }) => {
   const chartData = React.useMemo(() => {
     const now = new Date();
     let startDate: Date;
@@ -29,6 +30,12 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registr
       }
       return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1);
     };
+
+    // Combine allContacts and allLeads, marking leads appropriately
+    const combinedRegistrations: Contact[] = [
+      ...allContacts.map(c => ({ ...c, isLead: false, createdAt: c.dataregisto || c.createdAt })),
+      ...allLeads.map(l => ({ ...l, isLead: true, createdAt: l.datacontactolead || l.createdAt })),
+    ].filter(reg => reg.createdAt !== undefined); // Filter out entries without a valid createdAt
 
     switch (selectedPeriod) {
       case "today":
@@ -49,7 +56,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registr
         break;
       case "all":
       default:
-        const earliestDate = registrations.reduce((minDate, reg) => {
+        const earliestDate = combinedRegistrations.reduce((minDate, reg) => {
           const regDate = new Date(reg.createdAt);
           return regDate < minDate ? regDate : minDate;
         }, now);
@@ -60,7 +67,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registr
 
     const countsMap: { [key: string]: { contactsCount: number; leadsCount: number } } = {};
 
-    registrations.forEach(reg => {
+    combinedRegistrations.forEach(reg => {
       const regDate = new Date(reg.createdAt);
       if (regDate >= startDate && regDate <= endDate) {
         const key = formatKey(regDate, selectedPeriod);
@@ -88,7 +95,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registr
     }
 
     return dataPoints.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [registrations, selectedPeriod]);
+  }, [allContacts, allLeads, selectedPeriod]); // Updated dependencies
 
   return (
     <CardContent className="h-[350px] p-4">
