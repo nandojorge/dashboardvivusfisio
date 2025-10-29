@@ -167,7 +167,6 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
               name="Contactos"
               stroke="hsl(var(--primary))"
               strokeWidth={2}
-              dot={false} // Removed dots
               activeDot={{ r: 6 }}
             />
             <Line
@@ -176,7 +175,6 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
               name="Leads"
               stroke="#82ca9d" // Custom green color for leads
               strokeWidth={2}
-              dot={false} // Removed dots
               activeDot={{ r: 6 }}
             />
           </LineChart>

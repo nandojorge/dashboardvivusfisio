@@ -18,12 +18,12 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
   previousContacts,
   selectedPeriod,
 }) => {
-  const [chartType, setChartType] = useState<"origem" | "concelho" | "servico">("origem");
+  const [chartType, setChartType] = useState<"origem" | "concelho">("origem");
 
   const processChartData = (
     currentItems: Contact[],
     previousItems: Contact[],
-    type: "origem" | "concelho" | "servico"
+    type: "origem" | "concelho"
   ) => {
     const currentCounts: { [key: string]: number } = {};
     const previousCounts: { [key: string]: number } = {};
@@ -35,8 +35,6 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
         key = item.origemcontacto?.toLowerCase() || "desconhecida";
       } else if (type === "concelho") {
         key = item.concelho?.toLowerCase() || "desconhecido";
-      } else if (type === "servico" && item.isLead) { // Only count leads for 'servico'
-        key = item.servico?.toLowerCase() || "desconhecido";
       }
 
       if (key) {
@@ -51,8 +49,6 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
         key = item.origemcontacto?.toLowerCase() || "desconhecida";
       } else if (type === "concelho") {
         key = item.concelho?.toLowerCase() || "desconhecido";
-      } else if (type === "servico" && item.isLead) { // Only count leads for 'servico'
-        key = item.servico?.toLowerCase() || "desconhecido";
       }
 
       if (key) {
@@ -80,8 +76,6 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
         return "Contactos por Origem";
       case "concelho":
         return "Contactos por Concelho";
-      case "servico":
-        return "Leads por Serviço";
       default:
         return "Dados do Gráfico";
     }
@@ -93,8 +87,6 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
         return "Origem";
       case "concelho":
         return "Concelho";
-      case "servico":
-        return "Serviço";
       default:
         return "";
     }
@@ -120,14 +112,6 @@ const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = ({
             className={cn(chartType === "concelho" && "bg-primary text-primary-foreground")}
           >
             Concelho
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setChartType("servico")}
-            className={cn(chartType === "servico" && "bg-primary text-primary-foreground")}
-          >
-            Serviço
           </Button>
         </div>
       </CardHeader>

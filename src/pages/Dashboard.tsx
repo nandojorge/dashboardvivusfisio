@@ -19,7 +19,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import ContactBarChartSwitcher from "@/components/charts/ContactBarChartSwitcher"; // Corrigido para default import
+import ContactBarChartSwitcher from "@/components/charts/ContactBarChartSwitcher";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
