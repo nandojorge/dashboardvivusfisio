@@ -95,7 +95,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
   const renderCustomizedLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     if (value === 0) return null;
-    const offset = 8;
+    const offset = 15; // Aumentado o offset
     return (
       <text
         x={x + width + offset}
@@ -209,7 +209,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               margin={{
                 top: 20,
                 right: 20,
-                left: 30,
+                left: 80, // Aumentado a margem esquerda
                 bottom: 5,
               }}
               barGap={4}
@@ -222,7 +222,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={60}
+                width={100} // Aumentado a largura do eixo Y
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
               />
