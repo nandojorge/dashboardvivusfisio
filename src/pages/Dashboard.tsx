@@ -19,9 +19,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
-import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
-import LeadServiceBarChart from "@/components/charts/LeadServiceBarChart"; // Importar o novo gráfico
+import CombinedBarCharts from "@/components/charts/CombinedBarCharts"; // Importar o novo componente
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -489,36 +487,13 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Contactos por Origem</CardTitle>
-          </CardHeader>
-          <ContactOriginBarChart
-            currentContacts={combinedFilteredData}
-            previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
-            selectedPeriod={selectedPeriod}
-          />
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Contactos por Concelho</CardTitle>
-          </CardHeader>
-          <ContactCountyBarChart
-            currentContacts={combinedFilteredData}
-            previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
-            selectedPeriod={selectedPeriod}
-          />
-        </Card>
-        <Card> {/* Removido lg:col-span-2 para alinhar à esquerda */}
-          <CardHeader>
-            <CardTitle>Leads por Serviço</CardTitle>
-          </CardHeader>
-          <LeadServiceBarChart
-            currentLeads={filteredLeads}
-            previousLeads={previousPeriodFilteredLeads}
-            selectedPeriod={selectedPeriod}
-          />
-        </Card>
+        <CombinedBarCharts
+          currentContacts={combinedFilteredData}
+          previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
+          currentLeads={filteredLeads}
+          previousLeads={previousPeriodFilteredLeads}
+          selectedPeriod={selectedPeriod}
+        />
       </div>
 
       <RegistrationTrendChart
