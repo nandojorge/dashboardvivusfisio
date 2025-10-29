@@ -26,7 +26,9 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ data, dyn
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Legend wrapperStyle={{ color: 'black' }} />
+            <Legend
+              formatter={(value: string) => <span className="text-black">{value}</span>}
+            />
             <Bar dataKey="count" fill="#888888" />
           </BarChart>
         </ResponsiveContainer>
