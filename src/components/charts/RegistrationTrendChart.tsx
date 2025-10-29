@@ -278,7 +278,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
                 }}
               />
               <Line type="monotone" dataKey="contacts" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="leads" stroke="hsl(var(--green-500))" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+              <Line type="monotone" dataKey="leads" stroke="#16A34A" strokeWidth={2} dot={false} strokeDasharray="5 5" />
             </LineChart>
           </ResponsiveContainer>
         ) : (
