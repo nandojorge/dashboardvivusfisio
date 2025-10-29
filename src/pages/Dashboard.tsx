@@ -19,7 +19,8 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import ContactBarChartSwitcher from "@/components/charts/ContactBarChartSwitcher";
+import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -486,11 +487,28 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <ContactBarChartSwitcher
-        currentContacts={combinedFilteredData}
-        previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
-        selectedPeriod={selectedPeriod}
-      />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Contactos por Origem</CardTitle>
+          </CardHeader>
+          <ContactOriginBarChart
+            currentContacts={combinedFilteredData}
+            previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
+            selectedPeriod={selectedPeriod}
+          />
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Contactos por Concelho</CardTitle>
+          </CardHeader>
+          <ContactCountyBarChart
+            currentContacts={combinedFilteredData}
+            previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
+            selectedPeriod={selectedPeriod}
+          />
+        </Card>
+      </div>
 
       <RegistrationTrendChart
         allContacts={contactsData || []}
