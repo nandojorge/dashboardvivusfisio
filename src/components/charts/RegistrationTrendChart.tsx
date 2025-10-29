@@ -1,279 +1,185 @@
 "use client";
 
-import React, { useMemo } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  // CartesianGrid, // Removido para tirar o "xadrez"
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Contact } from "@/types/contact";
-import {
-  isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
-  subDays, subWeeks, subMonths, subYears,
-  startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
-  isWithinInterval,
-  format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
-  isBefore, isSameDay, addDays, isAfter, differenceInYears, addYears, addMonths, addWeeks
-} from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
-type GroupUnit = 'day' | 'week' | 'month' | 'year';
+import React from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Contact } from '@/types/contact';
 
 interface RegistrationTrendChartProps {
-  allContacts: Contact[]; // Unfiltered contacts
-  allLeads: Contact[];    // Unfiltered leads
-  selectedPeriod: FilterPeriod;
+  registrations: Contact[];
+  selectedPeriod: "today" | "7days" | "30days" | "60days" | "12months" | "all";
 }
 
-const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({
-  allContacts,
-  allLeads,
-  selectedPeriod,
-}) => {
-  // If "all" period is selected, do not render the component at all
-  if (selectedPeriod === "all") {
-    return null;
-  }
-
-  const processDataForChart = (
-    contacts: Contact[],
-    leads: Contact[],
-    selectedPeriod: FilterPeriod,
-  ) => {
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ registrations, selectedPeriod }) => {
+  const chartData = React.useMemo(() => {
     const now = new Date();
-    const combinedRawData = [...contacts, ...leads];
+    let startDate: Date;
+    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); // End of today
 
-    // 1. Determine the actual min and max dates from ALL raw data
-    let minOverallDataDate: Date | null = null;
-    let maxOverallDataDate: Date | null = null;
+    const formatKey = (date: Date, period: string) => {
+      if (period === "12months" || period === "all") {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`; // YYYY-MM
+      }
+      return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    };
 
-    if (combinedRawData.length > 0) {
-      combinedRawData.forEach(item => {
-        const dateString = item.datacontactolead || item.dataregisto;
-        if (dateString) {
-          const itemDate = parseISO(dateString);
-          if (!isNaN(itemDate.getTime())) {
-            if (minOverallDataDate === null || isBefore(itemDate, minOverallDataDate)) {
-              minOverallDataDate = itemDate;
-            }
-            if (maxOverallDataDate === null || isAfter(itemDate, maxOverallDataDate)) {
-              maxOverallDataDate = itemDate;
-            }
-          }
-        }
-      });
-    }
-
-    if (!minOverallDataDate || !maxOverallDataDate) {
-      return { chartData: [], groupUnit: 'day' };
-    }
-
-    // 2. Determine the chart's interval (start and end dates for the chart) and grouping unit
-    let finalIntervalStart: Date;
-    let finalGroupUnit: GroupUnit;
-    const intervalEnd: Date = endOfDay(now); // Always end at the end of today for trend charts
+    const getNextDate = (currentDate: Date, period: string) => {
+      if (period === "12months" || period === "all") {
+        return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      }
+      return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1);
+    };
 
     switch (selectedPeriod) {
       case "today":
-        finalIntervalStart = startOfDay(subDays(now, 19)); // Last 20 days (today + 19 previous days)
-        finalGroupUnit = 'day';
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         break;
       case "7days":
-        finalIntervalStart = startOfDay(subDays(now, 6)); // Last 7 days (today + 6 previous days)
-        finalGroupUnit = 'day';
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
         break;
       case "30days":
-        finalIntervalStart = startOfDay(subDays(now, 29)); // Last 30 days (today + 29 previous days)
-        finalGroupUnit = 'day';
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
         break;
       case "60days":
-        finalIntervalStart = startOfDay(subDays(now, 59)); // Last 60 days (today + 59 previous days)
-        finalGroupUnit = 'day';
-        break;
-      case "week":
-        finalIntervalStart = startOfWeek(subWeeks(now, 19), { weekStartsOn: 0, locale: ptBR }); // Last 20 weeks (current week + 19 previous weeks)
-        finalGroupUnit = 'week';
-        break;
-      case "month":
-        finalIntervalStart = startOfMonth(subMonths(now, 19)); // Last 20 months (current month + 19 previous months)
-        finalGroupUnit = 'month';
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 59, 0, 0, 0, 0);
         break;
       case "12months":
-        finalIntervalStart = startOfMonth(subMonths(now, 11)); // Last 12 months (current month + 11 previous months)
-        finalGroupUnit = 'month';
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1, 0, 0, 0, 0); // Start of month 12 months ago
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // End of current month
         break;
-      case "year":
-        finalIntervalStart = startOfYear(minOverallDataDate); // All years from the earliest record
-        finalGroupUnit = 'year';
-        break;
+      case "all":
       default:
-        finalIntervalStart = startOfDay(subDays(now, 19)); // Default to last 20 days
-        finalGroupUnit = 'day';
+        const earliestDate = registrations.reduce((minDate, reg) => {
+          const regDate = new Date(reg.createdAt);
+          return regDate < minDate ? regDate : minDate;
+        }, now);
+        startDate = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1, 0, 0, 0, 0); // Start of earliest month
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // End of current month
         break;
     }
 
-    // Filter the combined raw data based on the determined interval
-    const itemsInInterval = combinedRawData.filter(item => {
-      const dateString = item.datacontactolead || item.dataregisto;
-      if (!dateString) return false;
-      const itemDate = parseISO(dateString);
-      if (isNaN(itemDate.getTime())) return false;
-      return isWithinInterval(itemDate, { start: finalIntervalStart, end: intervalEnd });
-    });
+    const countsMap: { [key: string]: { contactsCount: number; leadsCount: number } } = {};
 
-    // If no items in the interval, return empty
-    if (itemsInInterval.length === 0) {
-      return { chartData: [], groupUnit: finalGroupUnit };
-    }
-
-    // 3. Generate the date range for the chart's X-axis
-    const generateDateRange = (start: Date, end: Date, unit: GroupUnit) => {
-      const dates: Date[] = [];
-      let currentDate = start;
-
-      while (isBefore(currentDate, end) || isSameDay(currentDate, end)) {
-        dates.push(currentDate);
-        if (unit === 'day') {
-          currentDate = addDays(currentDate, 1);
-        } else if (unit === 'week') {
-          currentDate = addWeeks(currentDate, 1);
-        } else if (unit === 'month') {
-          currentDate = addMonths(currentDate, 1);
-        } else if (unit === 'year') {
-          currentDate = addYears(currentDate, 1);
+    registrations.forEach(reg => {
+      const regDate = new Date(reg.createdAt);
+      if (regDate >= startDate && regDate <= endDate) {
+        const key = formatKey(regDate, selectedPeriod);
+        if (!countsMap[key]) {
+          countsMap[key] = { contactsCount: 0, leadsCount: 0 };
         }
-      }
-      return dates;
-    };
-
-    const dateRange = generateDateRange(finalIntervalStart, intervalEnd, finalGroupUnit);
-
-    // 4. Initialize data map for chart
-    const dateMap: { [key: string]: { date: Date; count: number; formattedDate: string } } = {};
-    dateRange.forEach(date => {
-      let key: string;
-      if (finalGroupUnit === 'day') {
-        key = format(date, 'yyyy-MM-dd');
-      } else if (finalGroupUnit === 'week') {
-        key = format(startOfWeek(date, { weekStartsOn: 0, locale: ptBR }), 'yyyy-MM-dd'); // Key by start of week
-      } else if (finalGroupUnit === 'month') {
-        key = format(startOfMonth(date), 'yyyy-MM');
-      } else { // year
-        key = format(startOfYear(date), 'yyyy');
-      }
-      dateMap[key] = { date, count: 0, formattedDate: formatDateLabel(date, finalGroupUnit) };
-    });
-
-    // 5. Populate data map with actual counts
-    itemsInInterval.forEach(item => {
-      const dateString = item.datacontactolead || item.dataregisto;
-      if (dateString) {
-        const itemDate = parseISO(dateString);
-        if (!isNaN(itemDate.getTime())) {
-          let key: string;
-          let dateToGroup = itemDate;
-
-          if (finalGroupUnit === 'day') {
-            key = format(dateToGroup, 'yyyy-MM-dd');
-          } else if (finalGroupUnit === 'week') {
-            dateToGroup = startOfWeek(dateToGroup, { weekStartsOn: 0, locale: ptBR });
-            key = format(dateToGroup, 'yyyy-MM-dd');
-          } else if (finalGroupUnit === 'month') {
-            dateToGroup = startOfMonth(dateToGroup);
-            key = format(dateToGroup, 'yyyy-MM');
-          } else { // year
-            dateToGroup = startOfYear(dateToGroup);
-            key = format(dateToGroup, 'yyyy');
-          }
-
-          if (dateMap[key]) {
-            dateMap[key].count++;
-          }
+        if (reg.isLead) {
+          countsMap[key].leadsCount++;
+        } else {
+          countsMap[key].contactsCount++;
         }
       }
     });
 
-    // 6. Convert map to array and sort by date
-    const chartData = Object.values(dateMap).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    return { chartData, groupUnit: finalGroupUnit };
-  };
-
-  const formatDateLabel = (date: Date, groupUnit: GroupUnit) => {
-    if (groupUnit === 'day') {
-      return format(date, 'dd/MM', { locale: ptBR });
-    } else if (groupUnit === 'week') {
-      // Format for week: "Semana de dd/MM"
-      return `Semana de ${format(startOfWeek(date, { weekStartsOn: 0, locale: ptBR }), 'dd/MM', { locale: ptBR })}`;
-    } else if (groupUnit === 'month') {
-      return format(date, 'MMM yyyy', { locale: ptBR });
-    } else if (groupUnit === 'year') {
-      return format(date, 'yyyy', { locale: ptBR });
+    const dataPoints = [];
+    let currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const key = formatKey(currentDate, selectedPeriod);
+      dataPoints.push({
+        date: key,
+        contactsCount: countsMap[key]?.contactsCount || 0,
+        leadsCount: countsMap[key]?.leadsCount || 0,
+      });
+      currentDate = getNextDate(currentDate, selectedPeriod);
     }
-    return format(date, 'dd/MM/yyyy', { locale: ptBR }); // Fallback
-  };
 
-  const { chartData, groupUnit } = useMemo(() => {
-    return processDataForChart(allContacts, allLeads, selectedPeriod);
-  }, [allContacts, allLeads, selectedPeriod]);
+    return dataPoints.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [registrations, selectedPeriod]);
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Contactos Recebidos</CardTitle>
-        <CardDescription>
-          Número de contactos ao longo do tempo para o período selecionado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="h-[350px] p-4">
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{
-                top: 5,
-                right: 10,
-                left: 10,
-                bottom: 0,
+    <CardContent className="h-[350px] p-4">
+      {chartData.length > 0 ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{
+              top: 10,
+              right: 30,
+              left: 0,
+              bottom: 0,
+            }}
+          >
+            <XAxis
+              dataKey="date"
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => {
+                if (selectedPeriod === "12months" || selectedPeriod === "all") {
+                  const [year, month] = value.split('-');
+                  return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('pt-PT', { month: 'short', year: '2-digit' });
+                }
+                return new Date(value).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
               }}
-            >
-              {/* <CartesianGrid strokeDasharray="3 3" /> */} {/* Removido */}
-              <XAxis
-                dataKey="date"
-                tickFormatter={(value) => formatDateLabel(value, groupUnit)}
-                interval="preserveStartEnd"
-                minTickGap={30}
-                tick={{ fontSize: 12 }} // Tamanho da fonte menor
-              />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} /> {/* Tamanho da fonte menor */}
-              <Tooltip
-                labelFormatter={(label) => formatDateLabel(label, groupUnit)}
-                formatter={(value: number) => [`${value} contactos`, "Total"]}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#8884d8"
-                activeDot={{ r: 8 }}
-                name="Contactos"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Não há dados para o período selecionado.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            />
+            <YAxis
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => value.toLocaleString()}
+            />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const dateLabel = selectedPeriod === "12months" || selectedPeriod === "all"
+                    ? new Date(label).toLocaleString('pt-PT', { month: 'long', year: 'numeric' })
+                    : new Date(label).toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+
+                  return (
+                    <div className="rounded-lg border bg-card p-2 shadow-sm">
+                      <div className="text-sm font-bold text-foreground">{dateLabel}</div>
+                      {payload.map((entry, index) => (
+                        <div key={`item-${index}`} className="flex items-center justify-between gap-2">
+                          <span className="text-[0.70rem] uppercase text-muted-foreground">{entry.name}</span>
+                          <span className="font-bold text-foreground" style={{ color: entry.color }}>{entry.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Legend
+              wrapperStyle={{ paddingTop: '10px' }}
+              formatter={(value: string) => {
+                if (value === 'contactsCount') return <span className="text-black">Contactos</span>;
+                if (value === 'leadsCount') return <span className="text-black">Leads</span>;
+                return <span className="text-black">{value}</span>;
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="contactsCount"
+              name="Contactos"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              dot={{ fill: "hsl(var(--primary))", r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="leadsCount"
+              name="Leads"
+              stroke="#82ca9d" // Custom green color for leads
+              strokeWidth={2}
+              dot={{ fill: "#82ca9d", r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          Nenhum registo para exibir neste período.
+        </div>
+      )}
+    </CardContent>
   );
 };
 
