@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart";
+import LeadServiceBarChart from "@/components/charts/LeadServiceBarChart"; // Importar o novo gráfico
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -505,6 +506,16 @@ const Dashboard = () => {
           <ContactCountyBarChart
             currentContacts={combinedFilteredData}
             previousContacts={[...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads]}
+            selectedPeriod={selectedPeriod}
+          />
+        </Card>
+        <Card className="lg:col-span-2"> {/* Ocupa duas colunas em telas grandes */}
+          <CardHeader>
+            <CardTitle>Leads por Serviço</CardTitle>
+          </CardHeader>
+          <LeadServiceBarChart
+            currentLeads={filteredLeads}
+            previousLeads={previousPeriodFilteredLeads}
             selectedPeriod={selectedPeriod}
           />
         </Card>

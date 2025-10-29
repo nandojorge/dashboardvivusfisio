@@ -11,6 +11,7 @@ export interface Contact {
   status?: string; // Added for general status
   conversao?: string; // Added for lead conversion status
   estadodalead?: string; // Added for lead state
+  servico?: string; // Added for lead service
   createdAt: string; // Assuming ISO string date
   isLead?: boolean; // Added this property to distinguish leads
   // Add other properties as needed
