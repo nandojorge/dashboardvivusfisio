@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getContacts, getLeads } from "@/api/contacts";
 import { Contact } from "@/types/contact";
@@ -19,7 +19,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import CombinedBarCharts from "@/components/charts/CombinedBarCharts"; // Importar o novo componente
+import CombinedBarCharts from "@/components/charts/CombinedBarCharts";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -488,8 +488,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CombinedBarCharts
-          currentContacts={filteredContacts} {/* Alterado para usar apenas filteredContacts */}
-          previousContacts={previousPeriodFilteredContacts} {/* Alterado para usar apenas previousPeriodFilteredContacts */}
+          currentContacts={filteredContacts}
+          previousContacts={previousPeriodFilteredContacts}
           currentLeads={filteredLeads}
           previousLeads={previousPeriodFilteredLeads}
           selectedPeriod={selectedPeriod}
