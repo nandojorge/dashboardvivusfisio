@@ -158,7 +158,7 @@ const LeadServiceBarChart: React.FC<LeadServiceBarChartProps> = ({ currentLeads,
             margin={{
               top: 20,
               right: 20,
-              left: 100,
+              left: 30, // Reduzido para mover o conteúdo para a esquerda
               bottom: 5,
             }}
             barGap={4}
@@ -171,7 +171,7 @@ const LeadServiceBarChart: React.FC<LeadServiceBarChartProps> = ({ currentLeads,
               tickLine={false}
               axisLine={false}
               className="text-sm"
-              width={90}
+              width={60} // Reduzido para dar mais espaço
               interval={0}
               tickFormatter={capitalizeFirstLetter}
             />
