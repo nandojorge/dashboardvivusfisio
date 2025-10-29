@@ -1,190 +1,276 @@
 "use client";
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { CardContent } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Contact } from '@/types/contact';
+import {
+  format, parseISO, isSameDay, isSameWeek, isSameMonth, isSameYear,
+  startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
+  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval,
+  subDays, subWeeks, subMonths, subYears,
+  isWithinInterval
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface RegistrationTrendChartProps {
   allContacts: Contact[];
   allLeads: Contact[];
-  selectedPeriod: "today" | "7days" | "30days" | "60days" | "12months" | "all";
+  selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allContacts, allLeads, selectedPeriod }) => {
-  const chartData = React.useMemo(() => {
-    const now = new Date();
-    let startDate: Date;
-    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); // End of today
 
-    const formatKey = (date: Date, period: string) => {
-      if (period === "12months" || period === "all") {
-        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`; // YYYY-MM
-      }
-      return date.toISOString().split('T')[0]; // YYYY-MM-DD
-    };
+  const getIntervalAndFormat = (period: string, now: Date) => {
+    let intervalStart: Date;
+    let intervalEnd: Date;
+    let dateFormat: string;
+    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | 'equidistant' | number = 'equidistant';
 
-    const getNextDate = (currentDate: Date, period: string) => {
-      if (period === "12months" || period === "all") {
-        return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-      }
-      return new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1);
-    };
-
-    // Combine allContacts and allLeads, marking leads appropriately
-    const combinedRegistrations: Contact[] = [
-      ...allContacts.map(c => ({ ...c, isLead: false, createdAt: c.dataregisto || c.createdAt })),
-      ...allLeads.map(l => ({ ...l, isLead: true, createdAt: l.datacontactolead || l.createdAt })),
-    ].filter(reg => reg.createdAt !== undefined); // Filter out entries without a valid createdAt
-
-    switch (selectedPeriod) {
+    switch (period) {
       case "today":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        intervalStart = startOfDay(now);
+        intervalEnd = endOfDay(now);
+        dateFormat = 'HH:mm';
         break;
       case "7days":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+        intervalStart = subDays(now, 6);
+        intervalEnd = now;
+        dateFormat = 'dd/MM';
         break;
       case "30days":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+        intervalStart = subDays(now, 29);
+        intervalEnd = now;
+        dateFormat = 'dd/MM';
         break;
       case "60days":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 59, 0, 0, 0, 0);
+        intervalStart = subDays(now, 59);
+        intervalEnd = now;
+        dateFormat = 'dd/MM';
         break;
       case "12months":
-        startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1, 0, 0, 0, 0); // Start of month 12 months ago
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // End of current month
+        intervalStart = subMonths(now, 11);
+        intervalEnd = now;
+        dateFormat = 'MMM yy';
+        break;
+      case "week":
+        intervalStart = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
+        intervalEnd = endOfWeek(now, { weekStartsOn: 0, locale: ptBR });
+        dateFormat = 'EEE';
+        break;
+      case "month":
+        intervalStart = startOfMonth(now);
+        intervalEnd = endOfMonth(now);
+        dateFormat = 'dd/MM';
+        break;
+      case "year":
+        intervalStart = startOfYear(now);
+        intervalEnd = endOfYear(now);
+        dateFormat = 'MMM';
         break;
       case "all":
-      default:
-        const earliestDate = combinedRegistrations.reduce((minDate, reg) => {
-          const regDate = new Date(reg.createdAt);
-          return regDate < minDate ? regDate : minDate;
-        }, now);
-        startDate = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1, 0, 0, 0, 0); // Start of earliest month
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // End of current month
+        intervalStart = new Date(Math.min(...allContacts.map(c => parseISO(c.dataregisto).getTime()), ...allLeads.map(l => parseISO(l.datacontactolead || l.dataregisto).getTime())));
+        intervalEnd = now;
+        dateFormat = 'MMM yy';
+        tickInterval = 'preserveStartEnd';
         break;
+      default:
+        intervalStart = startOfDay(now);
+        intervalEnd = endOfDay(now);
+        dateFormat = 'HH:mm';
+    }
+    return { intervalStart, intervalEnd, dateFormat, tickInterval };
+  };
+
+  const chartData = React.useMemo(() => {
+    const now = new Date();
+    const { intervalStart, intervalEnd, dateFormat } = getIntervalAndFormat(selectedPeriod, now);
+
+    const allItems = [
+      ...allContacts.map(c => ({ date: parseISO(c.dataregisto), type: 'contact' })),
+      ...allLeads.map(l => ({ date: parseISO(l.datacontactolead || l.dataregisto), type: 'lead' })),
+    ].filter(item => isWithinInterval(item.date, { start: intervalStart, end: intervalEnd }));
+
+    let dates: Date[] = [];
+    switch (selectedPeriod) {
+      case "today":
+        // For 'today', we might want hourly data or just a single point for the day
+        // For simplicity, let's aggregate by day for now, or by hour if data is granular
+        // If data is not granular enough for hours, it will just show one point.
+        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "7days":
+      case "30days":
+      case "60days":
+        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "12months":
+        dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "week":
+        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "month":
+        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "year":
+        dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
+        break;
+      case "all":
+        // Determine appropriate interval based on the span of "all" data
+        const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
+        if (spanInDays <= 60) { // Up to 2 months, show by day
+          dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        } else if (spanInDays <= 365 * 2) { // Up to 2 years, show by month
+          dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
+        } else { // More than 2 years, show by year
+          dates = eachYearOfInterval({ start: intervalStart, end: intervalEnd });
+        }
+        break;
+      default:
+        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
     }
 
-    const countsMap: { [key: string]: { contactsCount: number; leadsCount: number } } = {};
+    const dataMap = new Map<string, { name: string; contacts: number; leads: number }>();
 
-    combinedRegistrations.forEach(reg => {
-      const regDate = new Date(reg.createdAt);
-      if (regDate >= startDate && regDate <= endDate) {
-        const key = formatKey(regDate, selectedPeriod);
-        if (!countsMap[key]) {
-          countsMap[key] = { contactsCount: 0, leadsCount: 0 };
-        }
-        if (reg.isLead) {
-          countsMap[key].leadsCount++;
+    dates.forEach(date => {
+      let key: string;
+      if (selectedPeriod === "today") {
+        key = format(date, 'yyyy-MM-dd'); // Aggregate by day for 'today' if no hourly data
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+        key = format(date, 'yyyy-MM-dd');
+      } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
+        key = format(date, 'yyyy-MM');
+      } else if (selectedPeriod === "all") {
+        const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
+        if (spanInDays <= 60) {
+          key = format(date, 'yyyy-MM-dd');
+        } else if (spanInDays <= 365 * 2) {
+          key = format(date, 'yyyy-MM');
         } else {
-          countsMap[key].contactsCount++;
+          key = format(date, 'yyyy');
         }
+      } else {
+        key = format(date, 'yyyy-MM-dd');
+      }
+      dataMap.set(key, { name: format(date, dateFormat, { locale: ptBR }), contacts: 0, leads: 0 });
+    });
+
+    allItems.forEach(item => {
+      let key: string;
+      if (selectedPeriod === "today") {
+        key = format(item.date, 'yyyy-MM-dd');
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+        key = format(item.date, 'yyyy-MM-dd');
+      } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
+        key = format(item.date, 'yyyy-MM');
+      } else if (selectedPeriod === "all") {
+        const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
+        if (spanInDays <= 60) {
+          key = format(item.date, 'yyyy-MM-dd');
+        } else if (spanInDays <= 365 * 2) {
+          key = format(item.date, 'yyyy-MM');
+        } else {
+          key = format(item.date, 'yyyy');
+        }
+      } else {
+        key = format(item.date, 'yyyy-MM-dd');
+      }
+
+      if (dataMap.has(key)) {
+        const entry = dataMap.get(key)!;
+        if (item.type === 'contact') {
+          entry.contacts += 1;
+        } else if (item.type === 'lead') {
+          entry.leads += 1;
+        }
+        dataMap.set(key, entry);
       }
     });
 
-    const dataPoints = [];
-    let currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const key = formatKey(currentDate, selectedPeriod);
-      dataPoints.push({
-        date: key,
-        contactsCount: countsMap[key]?.contactsCount || 0,
-        leadsCount: countsMap[key]?.leadsCount || 0,
-      });
-      currentDate = getNextDate(currentDate, selectedPeriod);
-    }
+    const sortedData = Array.from(dataMap.values()).sort((a, b) => {
+      // This sorting assumes 'name' can be parsed into a date for correct ordering
+      // For 'all' period with yearly data, this might need adjustment if 'name' is just 'YYYY'
+      const dateA = parseISO(a.name, { locale: ptBR });
+      const dateB = parseISO(b.name, { locale: ptBR });
+      return dateA.getTime() - dateB.getTime();
+    });
 
-    return dataPoints.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [allContacts, allLeads, selectedPeriod]); // Updated dependencies
+    return sortedData;
+  }, [allContacts, allLeads, selectedPeriod]);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const contacts = payload.find((p: any) => p.dataKey === "contacts");
+      const leads = payload.find((p: any) => p.dataKey === "leads");
+
+      return (
+        <div className="rounded-lg border bg-card p-2 shadow-sm">
+          <div className="text-sm font-bold text-foreground">{label}</div>
+          <div className="flex flex-col">
+            <span className="text-[0.70rem] uppercase text-muted-foreground">Contactos: <span className="font-bold text-foreground">{contacts ? contacts.value : 0}</span></span>
+            <span className="text-[0.70rem] uppercase text-muted-foreground">Leads: <span className="font-bold text-foreground">{leads ? leads.value : 0}</span></span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const { dateFormat, tickInterval } = getIntervalAndFormat(selectedPeriod, new Date());
 
   return (
-    <CardContent className="h-[350px] p-4">
-      {chartData.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            <XAxis
-              dataKey="date"
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => {
-                if (selectedPeriod === "12months" || selectedPeriod === "all") {
-                  const [year, month] = value.split('-');
-                  return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('pt-PT', { month: 'short', year: '2-digit' });
-                }
-                return new Date(value).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Tendência de Registos</CardTitle>
+      </CardHeader>
+      <CardContent className="h-[350px] p-4">
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 0,
               }}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => value.toLocaleString()}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
-                  const dateLabel = selectedPeriod === "12months" || selectedPeriod === "all"
-                    ? new Date(label).toLocaleString('pt-PT', { month: 'long', year: 'numeric' })
-                    : new Date(label).toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-
-                  return (
-                    <div className="rounded-lg border bg-card p-2 shadow-sm">
-                      <div className="text-sm font-bold text-foreground">{dateLabel}</div>
-                      {payload.map((entry, index) => (
-                        <div key={`item-${index}`} className="flex items-center justify-between gap-2">
-                          <span className="text-[0.70rem] uppercase text-muted-foreground">{entry.name}</span>
-                          <span className="font-bold text-foreground" style={{ color: entry.color }}>{entry.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Legend
-              wrapperStyle={{ paddingTop: '10px' }}
-              formatter={(value: string) => {
-                if (value === 'contactsCount') return <span className="text-black">Contactos</span>;
-                if (value === 'leadsCount') return <span className="text-black">Leads</span>;
-                return <span className="text-black">{value}</span>;
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="contactsCount"
-              name="Contactos"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              activeDot={{ r: 6 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="leadsCount"
-              name="Leads"
-              stroke="#82ca9d" // Custom green color for leads
-              strokeWidth={2}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      ) : (
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          Nenhum registo para exibir neste período.
-        </div>
-      )}
-    </CardContent>
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+              <XAxis
+                dataKey="name"
+                tickFormatter={(value) => format(parseISO(value, { locale: ptBR }), dateFormat, { locale: ptBR })}
+                tickLine={false}
+                axisLine={false}
+                className="text-xs"
+                interval={tickInterval}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                className="text-xs"
+                tickFormatter={(value) => value.toLocaleString()}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{ paddingTop: '10px' }}
+                formatter={(value: string) => {
+                  if (value === 'contacts') return 'Contactos';
+                  if (value === 'leads') return 'Leads';
+                  return value;
+                }}
+              />
+              <Line type="monotone" dataKey="contacts" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="leads" stroke="hsl(var(--green-500))" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Nenhum registo para exibir neste período.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
