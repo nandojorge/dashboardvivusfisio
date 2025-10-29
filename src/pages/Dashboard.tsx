@@ -509,7 +509,7 @@ const Dashboard = () => {
             selectedPeriod={selectedPeriod}
           />
         </Card>
-        <Card className="lg:col-span-2"> {/* Ocupa duas colunas em telas grandes */}
+        <Card> {/* Removido lg:col-span-2 para alinhar à esquerda */}
           <CardHeader>
             <CardTitle>Leads por Serviço</CardTitle>
           </CardHeader>
