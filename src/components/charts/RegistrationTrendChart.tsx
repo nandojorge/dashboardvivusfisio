@@ -71,9 +71,12 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
       case "all":
         // Find the earliest date among all contacts and leads
         const allDates = [
-          ...allContacts.map(c => c.dataregisto ? parseISO(c.dataregisto).getTime() : Infinity),
-          ...allLeads.map(l => (l.datacontactolead || l.dataregisto) ? parseISO(l.datacontactolead || l.dataregisto).getTime() : Infinity)
-        ].filter(time => time !== Infinity);
+          ...allContacts.map(c => c.dataregisto && typeof c.dataregisto === 'string' ? parseISO(c.dataregisto).getTime() : Infinity),
+          ...allLeads.map(l => {
+            const dateString = l.datacontactolead || l.dataregisto;
+            return dateString && typeof dateString === 'string' ? parseISO(dateString).getTime() : Infinity;
+          })
+        ].filter(time => time !== Infinity && !isNaN(time)); // Filter out NaN from invalid dates
 
         intervalStart = allDates.length > 0 ? new Date(Math.min(...allDates)) : now;
         intervalEnd = now;
@@ -150,7 +153,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
         dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
     }
 
-    const dataMap = new Map<string, { name: string; contacts: number; leads: number }>();
+    const dataMap = new Map<string, { date: Date; contacts: number; leads: number }>();
 
     dates.forEach(date => {
       let key: string;
@@ -170,7 +173,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
       } else {
         key = format(date, 'yyyy-MM-dd');
       }
-      dataMap.set(key, { name: format(date, dateFormat, { locale: ptBR }), contacts: 0, leads: 0 });
+      dataMap.set(key, { date: date, contacts: 0, leads: 0 });
     });
 
     allItems.forEach(item => {
@@ -204,11 +207,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
     });
 
     const sortedData = Array.from(dataMap.values()).sort((a, b) => {
-      // This sorting assumes 'name' can be parsed into a date for correct ordering
-      // For 'all' period with yearly data, this might need adjustment if 'name' is just 'YYYY'
-      const dateA = parseISO(a.name, { locale: ptBR });
-      const dateB = parseISO(b.name, { locale: ptBR });
-      return dateA.getTime() - dateB.getTime();
+      return a.date.getTime() - b.date.getTime();
     });
 
     return sortedData;
@@ -219,9 +218,12 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
       const contacts = payload.find((p: any) => p.dataKey === "contacts");
       const leads = payload.find((p: any) => p.dataKey === "leads");
 
+      // The label here is the raw Date object from dataKey="date"
+      const formattedLabel = format(label, getIntervalAndFormat(selectedPeriod, new Date()).dateFormat, { locale: ptBR });
+
       return (
         <div className="rounded-lg border bg-card p-2 shadow-sm">
-          <div className="text-sm font-bold text-foreground">{label}</div>
+          <div className="text-sm font-bold text-foreground">{formattedLabel}</div>
           <div className="flex flex-col">
             <span className="text-[0.70rem] uppercase text-muted-foreground">Contactos: <span className="font-bold text-foreground">{contacts ? contacts.value : 0}</span></span>
             <span className="text-[0.70rem] uppercase text-muted-foreground">Leads: <span className="font-bold text-foreground">{leads ? leads.value : 0}</span></span>
@@ -253,8 +255,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
               <XAxis
-                dataKey="name"
-                tickFormatter={(value) => format(parseISO(value, { locale: ptBR }), dateFormat, { locale: ptBR })}
+                dataKey="date" // Agora usa o objeto Date diretamente
+                tickFormatter={(value: Date) => format(value, dateFormat, { locale: ptBR })} // Formata o objeto Date
                 tickLine={false}
                 axisLine={false}
                 className="text-xs"
