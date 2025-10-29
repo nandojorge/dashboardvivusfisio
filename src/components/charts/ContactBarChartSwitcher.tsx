@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ContactOriginBarChart from "./ContactOriginBarChart";
-import ContactCountyBarChart from "./ContactCountyBarChart";
-import { Contact } from '@/types/contact'; // Importar a interface Contact
+import ContactCountyBarChart from "./ContactCountyBarChart"; // Importar o componente atualizado
+import { Contact } from '@/types/contact';
 
 interface ContactBarChartSwitcherProps {
   currentContacts: Contact[];
@@ -49,7 +49,7 @@ export const ContactBarChartSwitcher: React.FC<ContactBarChartSwitcherProps> = (
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0"> {/* Remove padding here, let the charts manage it */}
+      <CardContent className="p-0">
         {activeChart === 'origin' ? (
           <ContactOriginBarChart
             currentContacts={currentContacts}
