@@ -442,7 +442,9 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{totalContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("text-foreground", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
+                  {getPreviousPeriodLabel(selectedPeriod)}:
+                </span>
                 <span className={cn("ml-1", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
                   {previousPeriodTotalContactsCount}
                 </span>
@@ -470,7 +472,9 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{newContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("text-foreground", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
+                  {getPreviousPeriodLabel(selectedPeriod)}:
+                </span>
                 <span className={cn("ml-1", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
                   {previousPeriodNewContactsCount}
                 </span>
