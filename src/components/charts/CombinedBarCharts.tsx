@@ -115,8 +115,6 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     return finalChartData;
   }, [currentContacts, previousContacts, currentLeads, previousLeads, selectedChartType]);
 
-  // Removed renderCustomizedLabel as labels are no longer on bars
-
   const minCategoryHeight = 45;
   const baseChartPadding = 100;
   const dynamicChartHeight = chartData.length > 0
@@ -219,11 +217,11 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               margin={{
                 top: 20,
                 right: 20,
-                left: 10, // Ajustado para melhor alinhamento
+                left: 10,
                 bottom: 5,
               }}
-              barGap={0} // Sem espaço entre as barras empilhadas
-              barCategoryGap={10} // Espaço entre as categorias
+              barGap={0}
+              barCategoryGap={10}
             >
               <XAxis type="number" hide={true} domain={[0, maxCurrentValueForDomain]} />
               <YAxis
@@ -232,26 +230,18 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={80} // Ajustado para aproximar os rótulos
+                width={80}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
-                tick={{ textAnchor: 'end' }} // Alinha o texto à direita do tick
+                tick={{ textAnchor: 'end' }}
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={CustomTooltip}
               />
-              {/* Removida a legenda para este estilo de gráfico, pois a informação é mais clara no tooltip */}
-              {/* <Legend
-                wrapperStyle={{ paddingTop: '10px' }}
-                formatter={(value: string) => {
-                  if (value === 'currentValue') return getCurrentPeriodLabel(selectedPeriod);
-                  if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
-                  return value;
-                }}
-              /> */}
-              <Bar dataKey="remainingValue" stackId="a" fill="hsl(var(--muted))" radius={[4, 4, 4, 4]} barSize={20} />
+              {/* Invertendo a ordem das barras para preenchimento da esquerda para a direita */}
               <Bar dataKey="currentValue" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
+              <Bar dataKey="remainingValue" stackId="a" fill="hsl(var(--muted))" radius={[4, 4, 4, 4]} barSize={20} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
