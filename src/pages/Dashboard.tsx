@@ -479,9 +479,6 @@ const Dashboard = () => {
             <p className="text-xs text-muted-foreground mt-1">
               <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Leads convertidas:</span> {convertedLeadsCount} ({convertedLeadsPercentage.toFixed(0)}%)
-            </p>
           </CardContent>
         </Card>
       </div>
