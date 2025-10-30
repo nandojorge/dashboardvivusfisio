@@ -226,7 +226,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               margin={{
                 top: 20,
                 right: 20,
-                left: 80,
+                left: 10, // Reduzida a margem esquerda
                 bottom: 5,
               }}
               barGap={4}
@@ -239,7 +239,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={100}
+                width={150} // Aumentada a largura do YAxis
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
                 tick={{ textAnchor: 'start' }}
