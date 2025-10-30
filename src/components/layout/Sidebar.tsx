@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Users, Menu } from "lucide-react"; // Removed UserPlus
+import { Users, Menu, CheckCircle2 } from "lucide-react"; // Added CheckCircle2 icon
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -11,8 +11,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Users, label: "Contactos", path: "/" }, // Changed label to Contactos and icon to Users
-  // Removed { icon: UserPlus, label: "Leads", path: "/leads" }, // New item for Leads
+  { icon: Users, label: "Contactos", path: "/" },
+  { icon: CheckCircle2, label: "Conversões", path: "/conversions" }, // New item for Conversions
 ];
 
 export const Sidebar = () => {
