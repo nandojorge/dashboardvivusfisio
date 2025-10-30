@@ -270,6 +270,10 @@ const Dashboard = () => {
     return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "nao").length;
   }, [filteredContacts]);
 
+  const archivedContactsCount = useMemo(() => {
+    return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "sim").length;
+  }, [filteredContacts]);
+
   const newContactsCount = useMemo(() => {
     return filteredLeads.length;
   }, [filteredLeads]);
@@ -396,7 +400,7 @@ const Dashboard = () => {
   // Determine the color of the progress bar
   const progressBarColorClass = contactsTarget !== null && totalContactsCount >= contactsTarget
     ? "bg-green-500"
-    : "bg-red-500";
+    : "bg-[#ff6961]"; // Cor vermelha específica
 
   if (isLoading) {
     return (
@@ -484,6 +488,9 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalContactsCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Arquivados: <span className="font-bold">{archivedContactsCount}</span>
+            </p>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 <span className={cn("text-foreground", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
