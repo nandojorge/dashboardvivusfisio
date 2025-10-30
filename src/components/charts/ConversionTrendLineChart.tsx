@@ -19,6 +19,9 @@ interface ConversionTrendLineChartProps {
   dateRange: { from?: Date; to?: Date };
 }
 
+// Define um tipo para os valores válidos de interval do Recharts XAxis
+type RechartsAxisInterval = 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number;
+
 const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
   allLeads,
   selectedPeriod,
@@ -29,7 +32,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number = 'preserveStartEnd'; // Changed 'equidistant' to 'preserveStartEnd'
+    let tickInterval: RechartsAxisInterval = 'preserveStartEnd';
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;

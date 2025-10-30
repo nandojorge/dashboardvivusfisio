@@ -295,8 +295,8 @@ const Conversions = () => {
   const getPreviousPeriodLabel = (period: FilterPeriod) => {
     if (period === "all") return "N/A";
     if (period === "custom") {
-      if (previousPeriodRange.start && previousPeriodRange.end) { // Corrected from .from to .start and .to to .end
-        return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`; // Corrected from .from to .start and .to to .end
+      if (previousPeriodRange.start && previousPeriodRange.end) {
+        return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`;
       }
       return "Período Anterior Personalizado";
     }
@@ -396,7 +396,7 @@ const Conversions = () => {
     setDateRange({ from: newFrom, to: newTo });
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => { // Changed type to DateRange | undefined
+  const handleDateSelect = (range: DateRange | undefined) => {
     if (range?.from && range?.to) {
       setDateRange(range);
       setSelectedPeriod("custom");
@@ -508,7 +508,7 @@ const Conversions = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange.from ? dateRange as DateRange : undefined} // Cast to DateRange if 'from' exists, otherwise undefined
+                selected={dateRange.from ? dateRange as DateRange : undefined}
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}

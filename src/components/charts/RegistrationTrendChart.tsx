@@ -19,13 +19,16 @@ interface RegistrationTrendChartProps {
   selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
+// Define um tipo para os valores válidos de interval do Recharts XAxis
+type RechartsAxisInterval = 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number;
+
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allContacts, allLeads, selectedPeriod }) => {
 
   const getIntervalAndFormat = (period: string, now: Date) => {
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number = 'preserveStartEnd'; // Changed 'equidistant' to 'preserveStartEnd'
+    let tickInterval: RechartsAxisInterval = 'preserveStartEnd';
 
     switch (period) {
       case "today": // Alterado para mostrar os últimos 15 dias
