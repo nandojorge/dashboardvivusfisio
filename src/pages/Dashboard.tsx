@@ -4,22 +4,20 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getContacts, getLeads } from "@/api/contacts";
 import { Contact } from "@/types/contact";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown, UserPlus } from "lucide-react";
+import { Terminal, Users, TrendingUp, TrendingDown, UserPlus, CheckCircle2, Percent, BarChart3 } from "lucide-react";
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
   isWithinInterval,
   format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
-  isBefore, isSameDay, addDays
+  addDays
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
-import CombinedBarCharts from "@/components/charts/CombinedBarCharts";
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -29,8 +27,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
-type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
+import { LeadsByStatusPieChart } from "@/components/charts/LeadsByStatusPieChart";
+import { LeadsByServiceBarChart } => "@/components/charts/LeadsByServiceBarChart";
+import { ConversionTrendLineChart } from "@/components/charts/ConversionTrendLineChart";
+import { ContactsByOriginBarChart } from "@/components/charts/ContactsByOriginBarChart";
+import { ContactsByCountyBarChart } from "@/components/charts/ContactsByCountyBarChart";
+
+type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all" | "custom";
 
 // Helper function to get the real-time cutoff date for a given period's start date
 const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
@@ -55,68 +62,78 @@ const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "
 };
 
 // Helper function to get previous period interval, now considering adjustment
-const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdjustingComparisons: boolean) => {
+const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date, isAdjustingComparisons: boolean, currentRange?: { from?: Date; to?: Date }) => {
   let start: Date;
   let end: Date;
   let previousPeriodStart: Date;
 
-  switch (currentPeriod) {
-    case "today":
-      previousPeriodStart = subDays(now, 1);
-      start = startOfDay(previousPeriodStart);
-      end = endOfDay(previousPeriodStart);
-      break;
-    case "7days":
-      start = startOfDay(subDays(now, 14));
-      end = endOfDay(subDays(now, 8));
-      break;
-    case "30days":
-      start = startOfDay(subDays(now, 60));
-      end = endOfDay(subDays(now, 31));
-      break;
-    case "60days":
-      start = startOfDay(subDays(now, 120));
-      end = endOfDay(subDays(now, 61));
-      break;
-    case "12months":
-      start = startOfDay(subMonths(now, 24));
-      end = endOfDay(subMonths(now, 13));
-      break;
-    case "week":
-      previousPeriodStart = subWeeks(now, 1);
-      start = startOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
-      end = endOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "week", now);
-      }
-      break;
-    case "month":
-      previousPeriodStart = subMonths(now, 1);
-      start = startOfMonth(previousPeriodStart);
-      end = endOfMonth(previousPeriodStart);
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "month", now);
-      }
-      break;
-    case "year":
-      previousPeriodStart = subYears(now, 1);
-      start = startOfYear(previousPeriodStart);
-      end = endOfYear(previousPeriodStart);
-      if (isAdjustingComparisons) {
-        end = getRealTimeCutoffDate(start, "year", now);
-      }
-      break;
-    case "all":
-      return { start: new Date(0), end: now };
-    default:
-      return { start: now, end: now };
+  if (currentPeriod === "custom" && currentRange?.from && currentRange?.to) {
+    const diffTime = Math.abs(currentRange.to.getTime() - currentRange.from.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    start = subDays(currentRange.from, diffDays + 1);
+    end = subDays(currentRange.to, diffDays + 1);
+  } else {
+    switch (currentPeriod) {
+      case "today":
+        previousPeriodStart = subDays(now, 1);
+        start = startOfDay(previousPeriodStart);
+        end = endOfDay(previousPeriodStart);
+        break;
+      case "7days":
+        start = startOfDay(subDays(now, 14));
+        end = endOfDay(subDays(now, 8));
+        break;
+      case "30days":
+        start = startOfDay(subDays(now, 60));
+        end = endOfDay(subDays(now, 31));
+        break;
+      case "60days":
+        start = startOfDay(subDays(now, 120));
+        end = endOfDay(subDays(now, 61));
+        break;
+      case "12months":
+        start = startOfDay(subMonths(now, 24));
+        end = endOfDay(subMonths(now, 13));
+        break;
+      case "week":
+        previousPeriodStart = subWeeks(now, 1);
+        start = startOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
+        end = endOfWeek(previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
+        if (isAdjustingComparisons) {
+          end = getRealTimeCutoffDate(start, "week", now);
+        }
+        break;
+      case "month":
+        previousPeriodStart = subMonths(now, 1);
+        start = startOfMonth(previousPeriodStart);
+        end = endOfMonth(previousPeriodStart);
+        if (isAdjustingComparisons) {
+          end = getRealTimeCutoffDate(start, "month", now);
+        }
+        break;
+      case "year":
+        previousPeriodStart = subYears(now, 1);
+        start = startOfYear(previousPeriodStart);
+        end = endOfYear(previousPeriodStart);
+        if (isAdjustingComparisons) {
+          end = getRealTimeCutoffDate(start, "year", now);
+        }
+        break;
+      case "all":
+        return { start: new Date(0), end: now };
+      default:
+        return { start: now, end: now };
+    }
   }
   return { start, end };
 };
 
 // Helper function to filter items (contacts/leads) by period
-const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
+const getPeriodFilter = (itemDate: Date, period: FilterPeriod, range?: { from?: Date; to?: Date }) => {
   const now = new Date();
+  if (period === "custom" && range?.from && range?.to) {
+    return isWithinInterval(itemDate, { start: startOfDay(range.from), end: endOfDay(range.to) });
+  }
   switch (period) {
     case "today":
       return isToday(itemDate);
@@ -146,8 +163,13 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 };
 
 const Dashboard = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+  const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("30days");
   const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: subDays(new Date(), 29),
+    to: new Date(),
+  });
 
   const { data: contactsData, isLoading: isLoadingContacts, isError: isErrorContacts, error: errorContacts } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -162,8 +184,6 @@ const Dashboard = () => {
   const isLoading = isLoadingContacts || isLoadingLeads;
   const isError = isErrorContacts || isErrorLeads;
   const error = errorContacts || errorLeads;
-
-  const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
 
   // Helper function to filter and process items (contacts or leads)
   const filterAndProcessItems = (
@@ -190,101 +210,71 @@ const Dashboard = () => {
       }
       return periodFilterFn(itemDate); // Only apply date filter
     }).map((item) => {
-      // Ensure assignedOrigin always has a value, even if empty in source
-      let assignedOrigin = item.origemcontacto && item.origemcontacto.trim() !== ''
-        ? item.origemcontacto.toLowerCase()
-        : "desconhecida"; // Assign "desconhecida" if empty or null
-
-      let assignedCounty = item.concelho ? item.concelho : '';
-      if (!assignedCounty) {
-        assignedCounty = exampleCounties[Math.floor(Math.random() * exampleCounties.length)];
-      }
-
-      let assignedStatus = item.status;
-      if (isLeadData) {
-        const convertedStatuses = ["cliente", "ativo"];
-        if (item.status && convertedStatuses.includes(item.status.toLowerCase())) {
-          assignedStatus = item.status;
-        } else {
-          assignedStatus = "Lead";
-        }
-      }
-
       return {
         ...item,
-        origemcontacto: assignedOrigin,
-        concelho: assignedCounty,
-        status: assignedStatus,
+        origemcontacto: item.origemcontacto ? item.origemcontacto.toLowerCase() : "desconhecida",
+        concelho: item.concelho || "desconhecido",
+        status: item.status || "desconhecido",
+        conversao: item.conversao || "Não Convertida",
+        estadodalead: item.estadodalead || "Desconhecido",
+        servico: item.servico || "Desconhecido",
       };
     });
   };
 
-  const filteredContacts = useMemo(() => {
-    return filterAndProcessItems(contactsData, (contactDate) => getPeriodFilter(contactDate, selectedPeriod), false);
-  }, [contactsData, selectedPeriod]);
+  const currentFilteredContacts = useMemo(() => {
+    return filterAndProcessItems(contactsData, (contactDate) => getPeriodFilter(contactDate, selectedPeriod, dateRange));
+  }, [contactsData, selectedPeriod, dateRange]);
 
-  const filteredLeads = useMemo(() => {
-    return filterAndProcessItems(leadsData, (leadDate) => getPeriodFilter(leadDate, selectedPeriod), true);
-  }, [leadsData, selectedPeriod]);
+  const currentFilteredLeads = useMemo(() => {
+    return filterAndProcessItems(leadsData, (leadDate) => getPeriodFilter(leadDate, selectedPeriod, dateRange), true);
+  }, [leadsData, selectedPeriod, dateRange]);
 
-  // Combine filtered contacts and leads for charts that need all data
-  const combinedFilteredData = useMemo(() => {
-    return [...filteredContacts, ...filteredLeads];
-  }, [filteredContacts, filteredLeads]);
+  const previousPeriodRange = useMemo(() => getPreviousPeriodInterval(selectedPeriod, new Date(), isAdjustingComparisons, dateRange), [selectedPeriod, isAdjustingComparisons, dateRange]);
+
+  const previousFilteredContacts = useMemo(() => {
+    if (!contactsData || selectedPeriod === "all") return [];
+    return filterAndProcessItems(contactsData, (contactDate) => isWithinInterval(contactDate, { start: previousPeriodRange.start, end: previousPeriodRange.end }));
+  }, [contactsData, selectedPeriod, isAdjustingComparisons, previousPeriodRange]);
+
+  const previousFilteredLeads = useMemo(() => {
+    if (!leadsData || selectedPeriod === "all") return [];
+    return filterAndProcessItems(leadsData, (leadDate) => isWithinInterval(leadDate, { start: previousPeriodRange.start, end: previousPeriodRange.end }), true);
+  }, [leadsData, selectedPeriod, isAdjustingComparisons, previousPeriodRange]);
 
   const totalContactsCount = useMemo(() => {
-    return filteredContacts.length;
-  }, [filteredContacts]);
+    return currentFilteredContacts.length;
+  }, [currentFilteredContacts]);
 
-  const activeContactsCount = useMemo(() => {
-    return filteredContacts.filter(contact => contact.arquivado?.toLowerCase() === "nao").length;
-  }, [filteredContacts]);
-
-  const newContactsCount = useMemo(() => {
-    return filteredLeads.length;
-  }, [filteredLeads]);
+  const totalLeadsCount = useMemo(() => {
+    return currentFilteredLeads.length;
+  }, [currentFilteredLeads]);
 
   const convertedLeadsCount = useMemo(() => {
-    return filteredLeads.filter(lead => lead.conversao === "Lead Convertida").length;
-  }, [filteredLeads]);
+    return currentFilteredLeads.filter(lead => lead.conversao === "Lead Convertida").length;
+  }, [currentFilteredLeads]);
 
-  const convertedLeadsPercentage = useMemo(() => {
-    if (newContactsCount === 0) return 0;
-    return (convertedLeadsCount / newContactsCount) * 100;
-  }, [convertedLeadsCount, newContactsCount]);
-
-  const leadsInContactCount = useMemo(() => {
-    return filteredLeads.filter(lead => lead.estadodalead === "Em Contacto").length;
-  }, [filteredLeads]);
-
-  const leadsInContactPercentage = useMemo(() => {
-    if (newContactsCount === 0) return 0;
-    return (leadsInContactCount / newContactsCount) * 100;
-  }, [leadsInContactCount, newContactsCount]);
-
-
-  // Calculate previous period data for comparison
-  const previousPeriodFilteredContacts = useMemo(() => {
-    if (!contactsData || selectedPeriod === "all") return [];
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return filterAndProcessItems(contactsData, (contactDate) => isWithinInterval(contactDate, { start: start, end: end }), false);
-  }, [contactsData, selectedPeriod, isAdjustingComparisons]);
-
-  const previousPeriodFilteredLeads = useMemo(() => {
-    if (!leadsData || selectedPeriod === "all") return [];
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now, isAdjustingComparisons);
-    return filterAndProcessItems(leadsData, (leadDate) => isWithinInterval(leadDate, { start: start, end: end }), true);
-  }, [leadsData, selectedPeriod, isAdjustingComparisons]);
+  const conversionRate = useMemo(() => {
+    if (totalLeadsCount === 0) return 0;
+    return (convertedLeadsCount / totalLeadsCount) * 100;
+  }, [convertedLeadsCount, totalLeadsCount]);
 
   const previousPeriodTotalContactsCount = useMemo(() => {
-    return previousPeriodFilteredContacts.length;
-  }, [previousPeriodFilteredContacts]);
+    return previousFilteredContacts.length;
+  }, [previousFilteredContacts]);
 
-  const previousPeriodNewContactsCount = useMemo(() => {
-    return previousPeriodFilteredLeads.length;
-  }, [previousPeriodFilteredLeads]);
+  const previousPeriodTotalLeadsCount = useMemo(() => {
+    return previousFilteredLeads.length;
+  }, [previousFilteredLeads]);
+
+  const previousPeriodConvertedLeadsCount = useMemo(() => {
+    return previousFilteredLeads.filter(lead => lead.conversao === "Lead Convertida").length;
+  }, [previousFilteredLeads]);
+
+  const previousPeriodConversionRate = useMemo(() => {
+    if (previousPeriodTotalLeadsCount === 0) return 0;
+    return (previousPeriodConvertedLeadsCount / previousPeriodTotalLeadsCount) * 100;
+  }, [previousPeriodConvertedLeadsCount, previousPeriodTotalLeadsCount]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -306,6 +296,11 @@ const Dashboard = () => {
         return "Este Ano";
       case "all":
         return "Todos";
+      case "custom":
+        if (dateRange.from && dateRange.to) {
+          return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
+        }
+        return "Período Personalizado";
       default:
         return "";
     }
@@ -329,35 +324,130 @@ const Dashboard = () => {
         return "Mês Anterior";
       case "year":
         return "Ano Anterior";
-      case "all":
-        return "N/A";
+      case "custom":
+        if (previousPeriodRange.start && previousPeriodRange.end) {
+          return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`;
+        }
+        return "Período Anterior";
       default:
-        return "";
+        return "Período Anterior";
     }
   };
 
-  const getTrendIcon = (currentValue: number, previousValue: number) => {
-    if (currentValue > previousValue) {
-      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
-    } else if (currentValue < previousValue) {
-      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
+  // Helper function to get comparison text and color
+  const getComparisonText = (currentValue: number, previousValue: number, isPercentage: boolean = false) => {
+    if (previousValue === 0) {
+      if (currentValue > 0) {
+        return {
+          text: "↑ Inf. vs. período anterior",
+          colorClass: "text-green-500",
+        };
+      }
+      return {
+        text: "0 vs. período anterior",
+        colorClass: "text-muted-foreground",
+      };
     }
-    return null;
+
+    const diff = currentValue - previousValue;
+    const absDiff = Math.abs(diff);
+    const arrow = diff > 0 ? "↑" : (diff < 0 ? "↓" : "");
+    const colorClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-muted-foreground");
+
+    let formattedDiffText;
+    if (isPercentage) {
+        formattedDiffText = `${absDiff.toFixed(1)}%`;
+    } else {
+        formattedDiffText = absDiff.toFixed(0);
+    }
+
+    const text = diff === 0 ? "0 vs. período anterior" : `${arrow} ${formattedDiffText} vs. período anterior`;
+
+    return {
+      text,
+      colorClass,
+    };
   };
 
   const getTrendTextColor = (currentValue: number, previousValue: number) => {
-    if (currentValue > previousValue) {
-      return "text-green-500";
-    } else if (currentValue < previousValue) {
-      return "text-red-500";
+    if (previousValue === 0) {
+      return currentValue > 0 ? "text-green-500" : "text-muted-foreground";
     }
-    return "text-muted-foreground";
+    const diff = currentValue - previousValue;
+    return diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-muted-foreground");
+  };
+
+  const handlePeriodChange = (period: FilterPeriod) => {
+    setSelectedPeriod(period);
+    const now = new Date();
+    let newFrom: Date | undefined;
+    let newTo: Date | undefined = now;
+
+    switch (period) {
+      case "today":
+        newFrom = subDays(now, 0);
+        break;
+      case "7days":
+        newFrom = subDays(now, 6);
+        break;
+      case "30days":
+        newFrom = subDays(now, 29);
+        break;
+      case "60days":
+        newFrom = subDays(now, 59);
+        break;
+      case "12months":
+        newFrom = subMonths(now, 11);
+        break;
+      case "week":
+        newFrom = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
+        break;
+      case "month":
+        newFrom = startOfMonth(now);
+        break;
+      case "year":
+        newFrom = startOfYear(now);
+        break;
+      case "all":
+        newFrom = undefined;
+        newTo = undefined;
+        break;
+      case "custom":
+        // Keep current custom range or set a default if none exists
+        if (!dateRange.from || !dateRange.to) {
+          newFrom = subDays(now, 29);
+          newTo = now;
+        } else {
+          newFrom = dateRange.from;
+          newTo = dateRange.to;
+        }
+        break;
+      default:
+        newFrom = subDays(now, 29);
+        break;
+    }
+
+    if (newFrom) newFrom.setHours(0, 0, 0, 0);
+    if (newTo) newTo.setHours(23, 59, 59, 999);
+
+    setDateRange({ from: newFrom, to: newTo });
+  };
+
+  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (range?.from && range?.to) {
+      setDateRange(range);
+      setSelectedPeriod("custom");
+    } else if (range?.from) {
+      setDateRange({ from: range.from, to: range.from });
+      setSelectedPeriod("custom");
+    }
+    setIsCalendarOpen(false);
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
         <Card>
           <CardHeader>
             <CardTitle>Carregando Dados...</CardTitle>
@@ -372,8 +462,8 @@ const Dashboard = () => {
 
   if (isError) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
         <Alert variant="destructive">
           <Terminal className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
@@ -398,37 +488,74 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl sm:text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex flex-wrap items-center gap-4 mb-4">
-        <Select value={selectedPeriod} onValueChange={(value: FilterPeriod) => setSelectedPeriod(value)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Selecionar Período" />
-          </SelectTrigger>
-          <SelectContent>
-            {periodOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="flex flex-col gap-4 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+        <div className="flex flex-wrap items-center gap-4">
+          <Select value={selectedPeriod} onValueChange={(value: FilterPeriod) => handlePeriodChange(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Selecionar Período" />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
-          <Toggle
-            pressed={isAdjustingComparisons}
-            onPressedChange={setIsAdjustingComparisons}
-            aria-label="Toggle ajustar comparações"
-            className={cn(
-              isAdjustingComparisons && "!bg-green-500 !text-white hover:!bg-green-600"
-            )}
-          >
-            Ajustar Comparações
-          </Toggle>
-        )}
+          {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
+            <Toggle
+              pressed={isAdjustingComparisons}
+              onPressedChange={setIsAdjustingComparisons}
+              aria-label="Toggle ajustar comparações"
+              className={cn(
+                isAdjustingComparisons && "!bg-green-500 !text-white hover:!bg-green-600"
+              )}
+            >
+              Ajustar Comparações
+            </Toggle>
+          )}
+
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger
+              id="date"
+              className={cn(
+                "w-[200px] justify-start text-left font-normal inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background px-4 py-2", // Replicating Button's outline variant styles
+                !dateRange.from && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                    {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                  </>
+                ) : (
+                  format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                )
+              ) : (
+                <span>Escolha uma data</span>
+              )}
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={dateRange}
+                onSelect={handleDateSelect}
+                numberOfMonths={2}
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -442,21 +569,17 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{totalContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className="text-foreground">Período anterior:</span>
                 <span className={cn("ml-1", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
                   {previousPeriodTotalContactsCount}
                 </span>
-                {getTrendIcon(totalContactsCount, previousPeriodTotalContactsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Ativos:</span> {activeContactsCount}
-            </p>
           </CardContent>
         </Card>
 
@@ -465,41 +588,113 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Total de Leads
             </CardTitle>
-            <div className="rounded-full bg-green-500/10 p-2 flex items-center justify-center">
-              <UserPlus className="h-4 w-4 text-green-500" />
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
+              <UserPlus className="h-4 w-4 text-foreground" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{newContactsCount}</div>
-            {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+            <div className="text-2xl font-bold">{totalLeadsCount}</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">Período anterior:</span>
+                <span className={cn("ml-1", getTrendTextColor(totalLeadsCount, previousPeriodTotalLeadsCount))}>
+                  {previousPeriodTotalLeadsCount}
+                </span>
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Leads convertidas:</span> {convertedLeadsCount} ({convertedLeadsPercentage.toFixed(0)}%)
-            </p>
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                Total acumulado
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Leads Convertidas
+            </CardTitle>
+            <div className="rounded-full bg-green-500/10 p-2 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{convertedLeadsCount}</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">Período anterior:</span>
+                <span className={cn("ml-1", getTrendTextColor(convertedLeadsCount, previousPeriodConvertedLeadsCount))}>
+                  {previousPeriodConvertedLeadsCount}
+                </span>
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                Total acumulado
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Taxa de Conversão
+            </CardTitle>
+            <div className="rounded-full bg-blue-500/10 p-2 flex items-center justify-center">
+              <Percent className="h-4 w-4 text-blue-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{conversionRate.toFixed(1)}%</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">Período anterior:</span>
+                <span className={cn("ml-1", getTrendTextColor(conversionRate, previousPeriodConversionRate))}>
+                  {previousPeriodConversionRate.toFixed(1)}%
+                </span>
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                Total acumulado
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <CombinedBarCharts
-          currentContacts={filteredContacts}
-          previousContacts={previousPeriodFilteredContacts}
-          currentLeads={filteredLeads}
-          previousLeads={previousPeriodFilteredLeads}
+        <ContactsByOriginBarChart
+          currentContacts={currentFilteredContacts}
           selectedPeriod={selectedPeriod}
+          dateRange={dateRange}
+        />
+        <ContactsByCountyBarChart
+          currentContacts={currentFilteredContacts}
+          selectedPeriod={selectedPeriod}
+          dateRange={dateRange}
         />
       </div>
 
-      <RegistrationTrendChart
-        allContacts={contactsData || []}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <LeadsByStatusPieChart
+          currentLeads={currentFilteredLeads}
+          selectedPeriod={selectedPeriod}
+          dateRange={dateRange}
+        />
+        <LeadsByServiceBarChart
+          currentLeads={currentFilteredLeads}
+          selectedPeriod={selectedPeriod}
+          dateRange={dateRange}
+        />
+      </div>
+
+      <ConversionTrendLineChart
         allLeads={leadsData || []}
         selectedPeriod={selectedPeriod}
+        dateRange={dateRange}
       />
     </div>
   );
