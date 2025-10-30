@@ -174,27 +174,24 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
 
   return (
     <Card className="w-full lg:col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{getChartTitle()}</CardTitle>
+      <CardHeader className="flex flex-col items-start"> {/* Alterado para flex-col e items-start */}
+        <CardTitle className="mb-4">{getChartTitle()}</CardTitle> {/* Adicionado mb-4 */}
         <div className="flex flex-wrap gap-2">
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
             onClick={() => setSelectedChartType("origin")}
-            // size="sm" // Removido size="sm"
           >
             Origem
           </Button>
           <Button
             variant={selectedChartType === "county" ? "default" : "outline"}
             onClick={() => setSelectedChartType("county")}
-            // size="sm" // Removido size="sm"
           >
             Concelho
           </Button>
           <Button
             variant={selectedChartType === "service" ? "default" : "outline"}
             onClick={() => setSelectedChartType("service")}
-            // size="sm" // Removido size="sm"
           >
             Serviço
           </Button>
