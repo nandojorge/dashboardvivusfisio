@@ -173,6 +173,22 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     }
   };
 
+  // Custom Legend Component
+  const CustomLegend = ({ payload }: any) => {
+    return (
+      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-2 text-xs sm:text-sm">
+        {payload.map((entry: any, index: number) => (
+          <li key={`item-${index}`} className="flex items-center">
+            <div className="h-3 w-3 rounded-full mr-1" style={{ backgroundColor: entry.color }} />
+            <span className="text-muted-foreground">
+              {entry.value === 'currentValue' ? getCurrentPeriodLabel(selectedPeriod) : getPreviousPeriodLabel(selectedPeriod)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <Card className="w-full lg:col-span-2">
       <CardHeader className="flex flex-col items-start">
@@ -235,12 +251,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 content={CustomTooltip}
               />
               <Legend
-                wrapperStyle={{ paddingTop: '10px' }}
-                formatter={(value: string) => {
-                  if (value === 'currentValue') return getCurrentPeriodLabel(selectedPeriod);
-                  if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
-                  return value;
-                }}
+                content={<CustomLegend selectedPeriod={selectedPeriod} />}
               />
               <Bar dataKey="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} />
               {selectedPeriod !== "all" && (
