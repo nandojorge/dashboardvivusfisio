@@ -174,8 +174,8 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
 
   return (
     <Card className="w-full lg:col-span-2">
-      <CardHeader className="flex flex-col items-start"> {/* Alterado para flex-col e items-start */}
-        <CardTitle className="mb-4">{getChartTitle()}</CardTitle> {/* Adicionado mb-4 */}
+      <CardHeader className="flex flex-col items-start">
+        <CardTitle className="mb-4">{getChartTitle()}</CardTitle>
         <div className="flex flex-wrap gap-2">
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
@@ -206,7 +206,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               margin={{
                 top: 20,
                 right: 20,
-                left: 80, // Aumentado a margem esquerda
+                left: 80,
                 bottom: 5,
               }}
               barGap={4}
@@ -219,9 +219,10 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={100} // Aumentado a largura do eixo Y
+                width={100}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
+                tick={{ textAnchor: 'start' }} {/* Adicionado para alinhar à esquerda */}
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
