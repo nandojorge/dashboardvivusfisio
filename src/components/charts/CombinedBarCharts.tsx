@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Contact } from '@/types/contact';
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -44,6 +44,21 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
       case "month": return "Mês Anterior";
       case "year": return "Ano Anterior";
       default: return "Período Anterior";
+    }
+  };
+
+  const getCurrentPeriodLabel = (period: FilterPeriod) => {
+    switch (period) {
+      case "today": return "Hoje";
+      case "7days": return "Últimos 7 Dias";
+      case "30days": return "Últimos 30 Dias";
+      case "60days": return "Últimos 60 Dias";
+      case "12months": return "Últimos 12 Meses";
+      case "week": return "Esta Semana";
+      case "month": return "Este Mês";
+      case "year": return "Este Ano";
+      case "all": return "Total";
+      default: return "Período Atual";
     }
   };
 
@@ -95,7 +110,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
   const renderCustomizedLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     if (value === 0) return null;
-    const offset = 15; // Aumentado o offset
+    const offset = 15;
     return (
       <text
         x={x + width + offset}
@@ -175,7 +190,12 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
   return (
     <Card className="w-full lg:col-span-2">
       <CardHeader className="flex flex-col items-start">
-        <CardTitle className="mb-4">{getChartTitle()}</CardTitle>
+        <CardTitle className="mb-2">{getChartTitle()}</CardTitle>
+        {selectedPeriod !== "all" && (
+          <CardDescription className="mb-4">
+            Comparação entre {getCurrentPeriodLabel(selectedPeriod)} e {getPreviousPeriodLabel(selectedPeriod)}
+          </CardDescription>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
@@ -231,7 +251,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               <Legend
                 wrapperStyle={{ paddingTop: '10px' }}
                 formatter={(value: string) => {
-                  if (value === 'currentValue') return `Período Atual`;
+                  if (value === 'currentValue') return getCurrentPeriodLabel(selectedPeriod);
                   if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
                   return value;
                 }}
