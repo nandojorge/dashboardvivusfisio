@@ -30,6 +30,7 @@ import {
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker"; // Import DateRange type
 
 import { LeadsByStatusPieChart } from "@/components/charts/LeadsByStatusPieChart";
 import { LeadsByServiceBarChart } from "@/components/charts/LeadsByServiceBarChart";
@@ -294,8 +295,8 @@ const Conversions = () => {
   const getPreviousPeriodLabel = (period: FilterPeriod) => {
     if (period === "all") return "N/A";
     if (period === "custom") {
-      if (previousPeriodRange.from && previousPeriodRange.to) {
-        return `${format(previousPeriodRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
+      if (previousPeriodRange.start && previousPeriodRange.end) { // Corrected from .from to .start and .to to .end
+        return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`; // Corrected from .from to .start and .to to .end
       }
       return "Período Anterior Personalizado";
     }
@@ -371,8 +372,8 @@ const Conversions = () => {
         newFrom = startOfYear(now);
         break;
       case "all":
-        newFrom = undefined;
-        newTo = undefined;
+        newFrom = undefined; // Set to undefined for 'all' period
+        newTo = undefined;   // Set to undefined for 'all' period
         break;
       case "custom":
         // Keep current custom range or set a default if none exists
@@ -395,7 +396,7 @@ const Conversions = () => {
     setDateRange({ from: newFrom, to: newTo });
   };
 
-  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
+  const handleDateSelect = (range: DateRange | undefined) => { // Changed type to DateRange | undefined
     if (range?.from && range?.to) {
       setDateRange(range);
       setSelectedPeriod("custom");
@@ -507,7 +508,7 @@ const Conversions = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange}
+                selected={dateRange.from ? dateRange as DateRange : undefined} // Cast to DateRange if 'from' exists, otherwise undefined
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}

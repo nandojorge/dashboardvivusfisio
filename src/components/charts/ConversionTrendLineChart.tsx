@@ -29,7 +29,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | 'equidistant' | number = 'equidistant';
+    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number = 'preserveStartEnd'; // Changed 'equidistant' to 'preserveStartEnd'
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;

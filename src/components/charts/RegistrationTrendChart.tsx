@@ -25,7 +25,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | 'equidistant' | number = 'equidistant';
+    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number = 'preserveStartEnd'; // Changed 'equidistant' to 'preserveStartEnd'
 
     switch (period) {
       case "today": // Alterado para mostrar os últimos 15 dias
