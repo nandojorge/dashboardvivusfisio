@@ -295,8 +295,8 @@ const Conversions = () => {
   const getPreviousPeriodLabel = (period: FilterPeriod) => {
     if (period === "all") return "N/A";
     if (period === "custom") {
-      if (previousPeriodRange.start && previousPeriodRange.end) {
-        return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`;
+      if (previousPeriodRange.start && previousPeriodRange.end) { // Corrected from .from to .start and .to to .end
+        return `${format(previousPeriodRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.end, "dd/MM/yyyy", { locale: ptBR })}`; // Corrected from .from to .start and .to to .end
       }
       return "Período Anterior Personalizado";
     }

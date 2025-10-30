@@ -32,54 +32,75 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: RechartsAxisInterval = 'preserveStartEnd';
+    let tickInterval: RechartsAxisInterval; // Removed initial assignment here
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;
       intervalEnd = range.to;
+      tickInterval = 'preserveStartEnd';
     } else {
       switch (period) {
         case "today":
           intervalStart = startOfDay(now);
           intervalEnd = endOfDay(now);
+          dateFormat = 'EEE';
+          tickInterval = 'preserveStartEnd';
           break;
         case "7days":
           intervalStart = subDays(now, 6);
           intervalEnd = now;
+          dateFormat = 'dd/MM';
+          tickInterval = 'preserveStartEnd';
           break;
         case "30days":
           intervalStart = subDays(now, 29);
           intervalEnd = now;
+          dateFormat = 'dd/MM';
+          tickInterval = 'preserveStartEnd';
           break;
         case "60days":
           intervalStart = subDays(now, 59);
           intervalEnd = now;
+          dateFormat = 'dd/MM';
+          tickInterval = 'preserveStartEnd';
           break;
         case "12months":
           intervalStart = subMonths(now, 11);
           intervalEnd = now;
+          dateFormat = 'MMM yy';
+          tickInterval = 'preserveStartEnd';
           break;
         case "week":
           intervalStart = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
           intervalEnd = endOfWeek(now, { weekStartsOn: 0, locale: ptBR });
+          dateFormat = 'EEE';
+          tickInterval = 'preserveStartEnd';
           break;
         case "month":
           intervalStart = startOfMonth(now);
           intervalEnd = endOfMonth(now);
+          dateFormat = 'dd/MM';
+          tickInterval = 'preserveStartEnd';
           break;
         case "year":
           intervalStart = startOfYear(now);
           intervalEnd = endOfYear(now);
+          dateFormat = 'MMM';
+          tickInterval = 'preserveStartEnd';
           break;
         case "all":
           const allDates = allLeads.map(l => l.datacontactolead && typeof l.datacontactolead === 'string' ? parseISO(l.datacontactolead).getTime() : Infinity)
                                           .filter(time => time !== Infinity && !isNaN(time));
           intervalStart = allDates.length > 0 ? new Date(Math.min(...allDates)) : now;
           intervalEnd = now;
+          dateFormat = 'MMM yy';
+          tickInterval = 'preserveStartEnd';
           break;
         default:
           intervalStart = startOfDay(now);
           intervalEnd = endOfDay(now);
+          dateFormat = 'HH:mm';
+          tickInterval = 'preserveStartEnd';
       }
     }
 
