@@ -32,7 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 
 import { LeadsByStatusPieChart } from "@/components/charts/LeadsByStatusPieChart";
-import { LeadsByServiceBarChart } => "@/components/charts/LeadsByServiceBarChart";
+import { LeadsByServiceBarChart } from "@/components/charts/LeadsByServiceBarChart";
 import { ConversionTrendLineChart } from "@/components/charts/ConversionTrendLineChart";
 import { ContactsByOriginBarChart } from "@/components/charts/ContactsByOriginBarChart";
 import { ContactsByCountyBarChart } from "@/components/charts/ContactsByCountyBarChart";
