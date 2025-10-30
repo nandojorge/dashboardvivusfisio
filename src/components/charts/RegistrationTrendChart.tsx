@@ -19,65 +19,53 @@ interface RegistrationTrendChartProps {
   selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
-// Define um tipo para os valores válidos de interval do Recharts XAxis
-type RechartsAxisInterval = 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | number;
-
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allContacts, allLeads, selectedPeriod }) => {
 
   const getIntervalAndFormat = (period: string, now: Date) => {
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: RechartsAxisInterval; // Removed initial assignment here
 
     switch (period) {
       case "today": // Alterado para mostrar os últimos 15 dias
         intervalStart = subDays(now, 14); // 15 dias incluindo hoje
         intervalEnd = endOfDay(now);
         dateFormat = 'dd/MM'; // Formato diário
-        tickInterval = 'preserveStartEnd';
         break;
       case "7days":
         intervalStart = subDays(now, 6);
         intervalEnd = now;
         dateFormat = 'dd/MM';
-        tickInterval = 'preserveStartEnd';
         break;
       case "30days":
         intervalStart = subDays(now, 29);
         intervalEnd = now;
         dateFormat = 'dd/MM';
-        tickInterval = 'preserveStartEnd';
         break;
       case "60days":
         intervalStart = subDays(now, 59);
         intervalEnd = now;
         dateFormat = 'dd/MM';
-        tickInterval = 'preserveStartEnd';
         break;
       case "12months":
         intervalStart = subMonths(now, 11);
         intervalEnd = now;
         dateFormat = 'MMM yy';
-        tickInterval = 'preserveStartEnd';
         break;
       case "week":
         intervalStart = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
         intervalEnd = endOfWeek(now, { weekStartsOn: 0, locale: ptBR });
         dateFormat = 'EEE';
-        tickInterval = 'preserveStartEnd';
         break;
       case "month":
         intervalStart = startOfMonth(now);
         intervalEnd = endOfMonth(now);
         dateFormat = 'dd/MM';
-        tickInterval = 'preserveStartEnd';
         break;
       case "year":
         intervalStart = startOfYear(now);
         intervalEnd = endOfYear(now);
         dateFormat = 'MMM';
-        tickInterval = 'preserveStartEnd';
         break;
       case "all":
         // Find the earliest date among all contacts and leads
@@ -92,15 +80,13 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
         intervalStart = allDates.length > 0 ? new Date(Math.min(...allDates)) : now;
         intervalEnd = now;
         dateFormat = 'MMM yy';
-        tickInterval = 'preserveStartEnd';
         break;
       default:
         intervalStart = startOfDay(now);
         intervalEnd = endOfDay(now);
         dateFormat = 'HH:mm';
-        tickInterval = 'preserveStartEnd';
     }
-    return { intervalStart, intervalEnd, dateFormat, tickInterval };
+    return { intervalStart, intervalEnd, dateFormat, tickInterval: 'preserveStartEnd' as const }; // Explicitly set tickInterval
   };
 
   const chartData = React.useMemo(() => {
