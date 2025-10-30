@@ -7,7 +7,7 @@ import { Contact } from '@/types/contact';
 import {
   format, parseISO, isSameDay, isSameWeek, isSameMonth, isSameYear,
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
-  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval, eachHourOfInterval, // Adicionado eachHourOfInterval
+  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval, eachHourOfInterval,
   subDays, subWeeks, subMonths, subYears,
   isWithinInterval
 } from 'date-fns';
@@ -28,10 +28,10 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
     let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | 'equidistant' | number = 'equidistant';
 
     switch (period) {
-      case "today":
-        intervalStart = startOfDay(now);
+      case "today": // Alterado para mostrar os últimos 15 dias
+        intervalStart = subDays(now, 14); // 15 dias incluindo hoje
         intervalEnd = endOfDay(now);
-        dateFormat = 'HH:mm';
+        dateFormat = 'dd/MM'; // Formato diário
         break;
       case "7days":
         intervalStart = subDays(now, 6);
@@ -119,24 +119,15 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     let dates: Date[] = [];
     switch (selectedPeriod) {
-      case "today":
-        // Para "today", gerar intervalos horários para mostrar a tendência ao longo do dia
-        dates = eachHourOfInterval({ start: intervalStart, end: intervalEnd });
-        break;
+      case "today": // Alterado para gerar dias para os últimos 15 dias
       case "7days":
       case "30days":
       case "60days":
-        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
-        break;
-      case "12months":
-        dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
-        break;
       case "week":
-        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
-        break;
       case "month":
         dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
         break;
+      case "12months":
       case "year":
         dates = eachMonthOfInterval({ start: intervalStart, end: intervalEnd });
         break;
@@ -158,9 +149,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     dates.forEach(date => {
       let key: string;
-      if (selectedPeriod === "today") { // Usar chave horária para "today"
-        key = format(date, 'yyyy-MM-dd-HH');
-      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      // Usar chave diária para "today" (agora 15 dias) e outros períodos diários
+      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(date, 'yyyy-MM');
@@ -181,9 +171,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     allItems.forEach(item => {
       let key: string;
-      if (selectedPeriod === "today") { // Usar chave horária para "today"
-        key = format(item.date, 'yyyy-MM-dd-HH');
-      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      // Usar chave diária para "today" (agora 15 dias) e outros períodos diários
+      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(item.date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(item.date, 'yyyy-MM');
