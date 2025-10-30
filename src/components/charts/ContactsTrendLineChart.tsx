@@ -13,14 +13,14 @@ import { ptBR } from 'date-fns/locale';
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months" | "custom";
 
-interface ConversionTrendLineChartProps {
-  allLeads: Contact[];
+interface ContactsTrendLineChartProps {
+  allContacts: Contact[];
   selectedPeriod: FilterPeriod;
   dateRange: { from?: Date; to?: Date };
 }
 
-const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
-  allLeads,
+const ContactsTrendLineChart: React.FC<ContactsTrendLineChartProps> = ({
+  allContacts,
   selectedPeriod,
   dateRange,
 }) => {
@@ -69,7 +69,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
           intervalEnd = endOfYear(now);
           break;
         case "all":
-          const allDates = allLeads.map(l => l.datacontactolead && typeof l.datacontactolead === 'string' ? parseISO(l.datacontactolead).getTime() : Infinity)
+          const allDates = allContacts.map(c => c.dataregisto && typeof c.dataregisto === 'string' ? parseISO(c.dataregisto).getTime() : Infinity)
                                           .filter(time => time !== Infinity && !isNaN(time));
           intervalStart = allDates.length > 0 ? new Date(Math.min(...allDates)) : now;
           intervalEnd = now;
@@ -105,6 +105,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
       tickInterval = 0; // Default to show all ticks for other periods
     }
 
+
     return { intervalStart, intervalEnd, dateFormat, tickInterval };
   };
 
@@ -112,15 +113,14 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     const now = new Date();
     const { intervalStart, intervalEnd, dateFormat } = getIntervalAndFormat(selectedPeriod, now, dateRange);
 
-    const convertedLeads = allLeads.filter(lead =>
-      lead.conversao === "Lead Convertida" &&
-      lead.datacontactolead && typeof lead.datacontactolead === 'string'
-    ).map(lead => ({
-      ...lead,
-      parsedDate: parseISO(lead.datacontactolead as string)
-    })).filter(lead =>
-      !isNaN(lead.parsedDate.getTime()) &&
-      isWithinInterval(lead.parsedDate, { start: intervalStart, end: intervalEnd })
+    const filteredContacts = allContacts.filter(contact =>
+      contact.dataregisto && typeof contact.dataregisto === 'string'
+    ).map(contact => ({
+      ...contact,
+      parsedDate: parseISO(contact.dataregisto as string)
+    })).filter(contact =>
+      !isNaN(contact.parsedDate.getTime()) &&
+      isWithinInterval(contact.parsedDate, { start: intervalStart, end: intervalEnd })
     );
 
     let dates: Date[] = [];
@@ -134,7 +134,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
       dates = eachYearOfInterval({ start: intervalStart, end: intervalEnd });
     }
 
-    const dataMap = new Map<string, { date: Date; convertedLeads: number }>();
+    const dataMap = new Map<string, { date: Date; contacts: number }>();
 
     dates.forEach(date => {
       let key: string;
@@ -145,10 +145,10 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
       } else {
         key = format(date, 'yyyy');
       }
-      dataMap.set(key, { date: date, convertedLeads: 0 });
+      dataMap.set(key, { date: date, contacts: 0 });
     });
 
-    convertedLeads.forEach(item => {
+    filteredContacts.forEach(item => {
       const itemDate = item.parsedDate;
       let key: string;
       if (spanInDays <= 60) {
@@ -161,7 +161,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
 
       if (dataMap.has(key)) {
         const entry = dataMap.get(key)!;
-        entry.convertedLeads += 1;
+        entry.contacts += 1;
         dataMap.set(key, entry);
       }
     });
@@ -171,18 +171,18 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     });
 
     return sortedData;
-  }, [allLeads, selectedPeriod, dateRange]);
+  }, [allContacts, selectedPeriod, dateRange]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const convertedLeads = payload.find((p: any) => p.dataKey === "convertedLeads");
+      const contacts = payload.find((p: any) => p.dataKey === "contacts");
       const formattedLabel = format(label, getIntervalAndFormat(selectedPeriod, new Date(), dateRange).dateFormat, { locale: ptBR });
 
       return (
         <div className="rounded-lg border bg-card p-2 shadow-sm">
           <div className="text-sm font-bold text-foreground">{formattedLabel}</div>
           <div className="flex flex-col">
-            <span className="text-[0.70rem] uppercase text-muted-foreground">Leads Convertidas: <span className="font-bold text-foreground">{convertedLeads ? convertedLeads.value : 0}</span></span>
+            <span className="text-[0.70rem] uppercase text-muted-foreground">Contactos: <span className="font-bold text-foreground">{contacts ? contacts.value : 0}</span></span>
           </div>
         </div>
       );
@@ -195,8 +195,8 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
   return (
     <Card className="w-full lg:col-span-2">
       <CardHeader>
-        <CardTitle>Tendência de Conversão de Leads</CardTitle>
-        <CardDescription>Número de leads convertidas ao longo do tempo</CardDescription>
+        <CardTitle>Tendência de Registos de Contactos</CardTitle>
+        <CardDescription>Número de contactos registados ao longo do tempo</CardDescription>
       </CardHeader>
       <CardContent className="h-[350px] p-4">
         {chartData.length > 0 ? (
@@ -229,11 +229,11 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
               <Legend
                 wrapperStyle={{ paddingTop: '10px' }}
                 formatter={(value: string) => {
-                  if (value === 'convertedLeads') return 'Leads Convertidas';
+                  if (value === 'contacts') return 'Contactos';
                   return value;
                 }}
               />
-              <Line type="monotone" dataKey="convertedLeads" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="contacts" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         ) : (
@@ -246,4 +246,4 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
   );
 };
 
-export { ConversionTrendLineChart };
+export { ContactsTrendLineChart };

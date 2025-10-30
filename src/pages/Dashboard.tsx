@@ -465,7 +465,7 @@ const Dashboard = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange}
+                selected={dateRange.from ? dateRange : undefined} {/* Corrected: Pass undefined if 'from' is not set */}
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}

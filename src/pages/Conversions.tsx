@@ -494,7 +494,7 @@ const Conversions = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange}
+                selected={dateRange.from ? dateRange : undefined} {/* Corrected: Pass undefined if 'from' is not set */}
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}
@@ -519,7 +519,7 @@ const Conversions = () => {
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 {(() => {
-                  const { text, colorClass } = getComparisonText(totalLeadsCount, previousTotalLeadsCount, false);
+                  const { text, colorClass } = getComparisonText(totalLeadsCount, previousTotalLeadsCount);
                   return (
                     <>
                       <span className={cn("ml-1", colorClass)}>
@@ -552,7 +552,7 @@ const Conversions = () => {
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 {(() => {
-                  const { text, colorClass } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount, false);
+                  const { text, colorClass } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount);
                   return (
                     <>
                       <span className={cn("ml-1", colorClass)}>
@@ -564,7 +564,7 @@ const Conversions = () => {
               </p>
             )}
             {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
+              <p className className="text-xs text-muted-foreground">
                 Total acumulado
               </p>
             )}
