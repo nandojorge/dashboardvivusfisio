@@ -400,7 +400,7 @@ const Dashboard = () => {
   // Determine the color of the progress bar
   const progressBarColorClass = contactsTarget !== null && totalContactsCount >= contactsTarget
     ? "bg-green-500"
-    : "bg-[#ff6961]"; // Cor vermelha específica
+    : "bg-gray-700"; // Alterado de vermelho para cinzento escuro
 
   if (isLoading) {
     return (
