@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Contact } from '@/types/contact';
@@ -94,25 +94,21 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     const data = filteredValues.map(value => ({
       name: value,
       currentValue: currentCounts[value] || 0,
-      previousValue: previousCounts[value] || 0, // Keep for tooltip
+      previousValue: previousCounts[value] || 0,
     }));
 
     data.sort((a, b) => {
+      // Sort by current value, then by previous value, then alphabetically
       if (b.currentValue !== a.currentValue) {
         return b.currentValue - a.currentValue;
+      }
+      if (b.previousValue !== a.previousValue) {
+        return b.previousValue - a.previousValue;
       }
       return a.name.localeCompare(b.name);
     });
 
-    const maxCurrentValue = Math.max(...data.map(d => d.currentValue), 0);
-
-    // Add remainingValue for the background bar effect
-    const finalChartData = data.map(d => ({
-      ...d,
-      remainingValue: maxCurrentValue - d.currentValue,
-    }));
-
-    return finalChartData;
+    return data;
   }, [currentContacts, previousContacts, currentLeads, previousLeads, selectedChartType]);
 
   const minCategoryHeight = 45;
@@ -121,7 +117,10 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     ? Math.max(150, chartData.length * minCategoryHeight + baseChartPadding)
     : 150;
 
-  const maxCurrentValueForDomain = Math.max(...chartData.map(d => d.currentValue), 0);
+  // Calculate max value for X-axis domain considering both current and previous values
+  const maxChartValue = useMemo(() => {
+    return Math.max(...chartData.map(d => Math.max(d.currentValue, d.previousValue)), 0);
+  }, [chartData]);
 
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -142,13 +141,11 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               <span className="text-[0.70rem] uppercase text-muted-foreground">Atual</span>
               <span className="font-bold text-foreground">{currentValue}</span>
             </div>
-            {/* Sempre mostrar o período anterior */}
             <div className="flex flex-col">
               <span className="text-[0.70rem] uppercase text-muted-foreground">Anterior</span>
               <span className="font-bold text-foreground">{previousValue}</span>
             </div>
           </div>
-          {/* Sempre mostrar a percentagem de mudança */}
           <div className="flex items-center text-xs mt-1">
             {percentageChange > 0 && <TrendingUp className="h-3 w-3 text-green-500 mr-1" />}
             {percentageChange < 0 && <TrendingDown className="h-3 w-3 text-red-500 mr-1" />}
@@ -218,10 +215,10 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 left: 10,
                 bottom: 5,
               }}
-              barGap={0}
-              barCategoryGap={10}
+              barCategoryGap={5} // Espaçamento entre grupos de barras
+              barGap={2} // Espaçamento entre barras dentro de um grupo
             >
-              <XAxis type="number" hide={true} domain={[0, maxCurrentValueForDomain]} />
+              <XAxis type="number" hide={true} domain={[0, maxChartValue]} />
               <YAxis
                 type="category"
                 dataKey="name"
@@ -237,8 +234,18 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={CustomTooltip}
               />
-              <Bar dataKey="currentValue" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
-              <Bar dataKey="remainingValue" stackId="a" fill="hsl(var(--muted))" radius={[4, 4, 4, 4]} barSize={20} />
+              <Legend
+                wrapperStyle={{ paddingTop: '10px' }}
+                formatter={(value: string) => {
+                  if (value === 'currentValue') return getCurrentPeriodLabel(selectedPeriod);
+                  if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
+                  return value;
+                }}
+              />
+              <Bar dataKey="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} />
+              {selectedPeriod !== "all" && (
+                <Bar dataKey="previousValue" fill="hsl(var(--secondary))" radius={[4, 4, 4, 4]} />
+              )}
             </BarChart>
           </ResponsiveContainer>
         ) : (
