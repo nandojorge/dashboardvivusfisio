@@ -468,6 +468,15 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{newContactsCount}</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
+                  {previousPeriodNewContactsCount}
+                </span>
+                {getTrendIcon(newContactsCount, previousPeriodNewContactsCount)}
+              </p>
+            )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
                 {getPreviousPeriodLabel(selectedPeriod)}
