@@ -393,6 +393,11 @@ const Dashboard = () => {
     ? Math.max(contactsTarget - totalContactsCount, 0)
     : 0;
 
+  // Determine the color of the progress bar
+  const progressBarColorClass = contactsTarget !== null && totalContactsCount >= contactsTarget
+    ? "bg-green-500"
+    : "bg-red-500";
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -498,7 +503,7 @@ const Dashboard = () => {
 
             {contactsTarget !== null && selectedPeriod !== "all" && (
               <div className="mt-4">
-                <Progress value={contactsProgress} className="h-2" />
+                <Progress value={contactsProgress} className={cn("h-2", progressBarColorClass)} />
                 <p className="text-xs text-muted-foreground mt-1">
                   {contactsRemaining > 0
                     ? `${contactsRemaining} para o objetivo de ${contactsTarget}`
