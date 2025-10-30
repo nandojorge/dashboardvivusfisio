@@ -198,25 +198,25 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
             Comparação entre {getCurrentPeriodLabel(selectedPeriod)} e {getPreviousPeriodLabel(selectedPeriod)}
           </CardDescription>
         )}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2"> {/* Removido flex-wrap */}
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
             onClick={() => setSelectedChartType("origin")}
-            className="w-full sm:w-auto"
+            // Removido className="w-full sm:w-auto"
           >
             Origem
           </Button>
           <Button
             variant={selectedChartType === "county" ? "default" : "outline"}
             onClick={() => setSelectedChartType("county")}
-            className="w-full sm:w-auto"
+            // Removido className="w-full sm:w-auto"
           >
             Concelho
           </Button>
           <Button
             variant={selectedChartType === "service" ? "default" : "outline"}
             onClick={() => setSelectedChartType("service")}
-            className="w-full sm:w-auto"
+            // Removido className="w-full sm:w-auto"
           >
             Serviço
           </Button>
