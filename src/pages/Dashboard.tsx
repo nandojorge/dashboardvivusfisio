@@ -454,7 +454,6 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            {/* Removida a linha de informação de 'Ativos' */}
           </CardContent>
         </Card>
 
@@ -474,9 +473,6 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Leads em Contacto:</span> {leadsInContactCount} ({leadsInContactPercentage.toFixed(0)}%)
-            </p>
           </CardContent>
         </Card>
       </div>
