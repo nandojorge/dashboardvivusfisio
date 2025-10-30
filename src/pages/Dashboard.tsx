@@ -454,9 +454,7 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground">Ativos:</span> {activeContactsCount}
-            </p>
+            {/* Removida a linha de informação de 'Ativos' */}
           </CardContent>
         </Card>
 
