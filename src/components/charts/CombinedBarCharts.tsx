@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'; // Removido LabelList e Legend, pois não são usados diretamente no JSX do BarChart com este estilo
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Contact } from '@/types/contact';
@@ -142,27 +142,25 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               <span className="text-[0.70rem] uppercase text-muted-foreground">Atual</span>
               <span className="font-bold text-foreground">{currentValue}</span>
             </div>
-            {selectedPeriod !== "all" && (
-              <div className="flex flex-col">
-                <span className="text-[0.70rem] uppercase text-muted-foreground">Anterior</span>
-                <span className="font-bold text-foreground">{previousValue}</span>
+            {/* Sempre mostrar o período anterior */}
+            <div className="flex flex-col">
+              <span className="text-[0.70rem] uppercase text-muted-foreground">Anterior</span>
+              <span className="font-bold text-foreground">{previousValue}</span>
             </div>
-            )}
           </div>
-          {selectedPeriod !== "all" && (
-            <div className="flex items-center text-xs mt-1">
-              {percentageChange > 0 && <TrendingUp className="h-3 w-3 text-green-500 mr-1" />}
-              {percentageChange < 0 && <TrendingDown className="h-3 w-3 text-red-500 mr-1" />}
-              <span className={cn(
-                percentageChange > 0 && "text-green-500",
-                percentageChange < 0 && "text-red-500",
-                percentageChange === 0 && "text-muted-foreground"
-              )}>
-                {percentageChange.toFixed(1)}%
-              </span>
-              <span className="ml-1 text-muted-foreground">vs. {getPreviousPeriodLabel(selectedPeriod)}</span>
-            </div>
-          )}
+          {/* Sempre mostrar a percentagem de mudança */}
+          <div className="flex items-center text-xs mt-1">
+            {percentageChange > 0 && <TrendingUp className="h-3 w-3 text-green-500 mr-1" />}
+            {percentageChange < 0 && <TrendingDown className="h-3 w-3 text-red-500 mr-1" />}
+            <span className={cn(
+              percentageChange > 0 && "text-green-500",
+              percentageChange < 0 && "text-red-500",
+              percentageChange === 0 && "text-muted-foreground"
+            )}>
+              {percentageChange.toFixed(1)}%
+            </span>
+            <span className="ml-1 text-muted-foreground">vs. {getPreviousPeriodLabel(selectedPeriod)}</span>
+          </div>
         </div>
       );
     }
