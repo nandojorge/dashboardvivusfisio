@@ -202,18 +202,21 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
             onClick={() => setSelectedChartType("origin")}
+            className="w-full sm:w-auto"
           >
             Origem
           </Button>
           <Button
             variant={selectedChartType === "county" ? "default" : "outline"}
             onClick={() => setSelectedChartType("county")}
+            className="w-full sm:w-auto"
           >
             Concelho
           </Button>
           <Button
             variant={selectedChartType === "service" ? "default" : "outline"}
             onClick={() => setSelectedChartType("service")}
+            className="w-full sm:w-auto"
           >
             Serviço
           </Button>
