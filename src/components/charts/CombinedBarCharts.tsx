@@ -229,7 +229,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
-                className="text-sm"
+                className="text-xs" {/* Alterado de text-sm para text-xs */}
                 width={80}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
@@ -239,7 +239,6 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={CustomTooltip}
               />
-              {/* Invertendo a ordem das barras para preenchimento da esquerda para a direita */}
               <Bar dataKey="currentValue" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
               <Bar dataKey="remainingValue" stackId="a" fill="hsl(var(--muted))" radius={[4, 4, 4, 4]} barSize={20} />
             </BarChart>
