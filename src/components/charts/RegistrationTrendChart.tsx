@@ -7,7 +7,7 @@ import { Contact } from '@/types/contact';
 import {
   format, parseISO, isSameDay, isSameWeek, isSameMonth, isSameYear,
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
-  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval,
+  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval, eachHourOfInterval, // Adicionado eachHourOfInterval
   subDays, subWeeks, subMonths, subYears,
   isWithinInterval
 } from 'date-fns';
@@ -120,7 +120,8 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
     let dates: Date[] = [];
     switch (selectedPeriod) {
       case "today":
-        dates = eachDayOfInterval({ start: intervalStart, end: intervalEnd });
+        // Para "today", gerar intervalos horários para mostrar a tendência ao longo do dia
+        dates = eachHourOfInterval({ start: intervalStart, end: intervalEnd });
         break;
       case "7days":
       case "30days":
@@ -157,7 +158,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     dates.forEach(date => {
       let key: string;
-      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      if (selectedPeriod === "today") { // Usar chave horária para "today"
+        key = format(date, 'yyyy-MM-dd-HH');
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(date, 'yyyy-MM');
@@ -178,7 +181,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
 
     allItems.forEach(item => {
       let key: string;
-      if (selectedPeriod === "today" || selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
+      if (selectedPeriod === "today") { // Usar chave horária para "today"
+        key = format(item.date, 'yyyy-MM-dd-HH');
+      } else if (selectedPeriod === "7days" || selectedPeriod === "30days" || selectedPeriod === "60days" || selectedPeriod === "week" || selectedPeriod === "month") {
         key = format(item.date, 'yyyy-MM-dd');
       } else if (selectedPeriod === "12months" || selectedPeriod === "year") {
         key = format(item.date, 'yyyy-MM');
