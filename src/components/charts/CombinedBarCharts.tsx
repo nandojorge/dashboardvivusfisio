@@ -94,7 +94,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     const data = filteredValues.map(value => ({
       name: value,
       currentValue: currentCounts[value] || 0,
-      previousValue: previousCounts[value] || 0,
+      previousValue: previousCounts[value] || 0, // Keep for tooltip
     }));
 
     data.sort((a, b) => {
@@ -104,26 +104,18 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
       return a.name.localeCompare(b.name);
     });
 
-    return data;
+    const maxCurrentValue = Math.max(...data.map(d => d.currentValue), 0);
+
+    // Add remainingValue for the background bar effect
+    const finalChartData = data.map(d => ({
+      ...d,
+      remainingValue: maxCurrentValue - d.currentValue,
+    }));
+
+    return finalChartData;
   }, [currentContacts, previousContacts, currentLeads, previousLeads, selectedChartType]);
 
-  const renderCustomizedLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
-    if (value === 0) return null;
-    const offset = 15;
-    return (
-      <text
-        x={x + width + offset}
-        y={y + height / 2}
-        fill="hsl(var(--foreground))"
-        textAnchor="start"
-        dominantBaseline="middle"
-        className="text-sm font-semibold"
-      >
-        {value}
-      </text>
-    );
-  };
+  // Removed renderCustomizedLabel as labels are no longer on bars
 
   const minCategoryHeight = 45;
   const baseChartPadding = 100;
@@ -131,7 +123,8 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     ? Math.max(150, chartData.length * minCategoryHeight + baseChartPadding)
     : 150;
 
-  const maxTotalValue = Math.max(...chartData.flatMap(d => [d.currentValue, d.previousValue]), 0);
+  const maxCurrentValueForDomain = Math.max(...chartData.map(d => d.currentValue), 0);
+
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -226,44 +219,39 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               margin={{
                 top: 20,
                 right: 20,
-                left: 10, // Reduzida a margem esquerda
+                left: 10, // Ajustado para melhor alinhamento
                 bottom: 5,
               }}
-              barGap={4}
-              barCategoryGap={60}
+              barGap={0} // Sem espaço entre as barras empilhadas
+              barCategoryGap={10} // Espaço entre as categorias
             >
-              <XAxis type="number" hide={true} domain={[0, maxTotalValue * 1.1]} />
+              <XAxis type="number" hide={true} domain={[0, maxCurrentValueForDomain]} />
               <YAxis
                 type="category"
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
                 className="text-sm"
-                width={150} // Aumentada a largura do YAxis
+                width={80} // Ajustado para aproximar os rótulos
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
-                tick={{ textAnchor: 'start' }}
+                tick={{ textAnchor: 'end' }} // Alinha o texto à direita do tick
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={CustomTooltip}
               />
-              <Legend
+              {/* Removida a legenda para este estilo de gráfico, pois a informação é mais clara no tooltip */}
+              {/* <Legend
                 wrapperStyle={{ paddingTop: '10px' }}
                 formatter={(value: string) => {
                   if (value === 'currentValue') return getCurrentPeriodLabel(selectedPeriod);
                   if (value === 'previousValue') return getPreviousPeriodLabel(selectedPeriod);
                   return value;
                 }}
-              />
-              <Bar dataKey="currentValue" name="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20}>
-                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
-              </Bar>
-              {selectedPeriod !== "all" && (
-                <Bar dataKey="previousValue" name="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} barSize={20}>
-                  <LabelList dataKey="previousValue" content={renderCustomizedLabel} />
-                </Bar>
-              )}
+              /> */}
+              <Bar dataKey="remainingValue" stackId="a" fill="hsl(var(--muted))" radius={[4, 4, 4, 4]} barSize={20} />
+              <Bar dataKey="currentValue" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} barSize={20} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
