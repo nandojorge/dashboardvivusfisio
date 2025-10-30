@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 import { Contact } from '@/types/contact';
 import CombinedBarCharts from '@/components/charts/CombinedBarCharts';
 import { PieChartComponent } from '@/components/charts/PieChartComponent';
-import { LineChartComponent } from '@/components/charts/LineChartComponent';
+import LineChartComponent from '@/components/charts/LineChartComponent'; // Importação atualizada
 import { DataTable } from '@/components/data-table/data-table';
 import { columns } from '@/components/data-table/columns';
-import { showError } from '@/utils/toast'; // Importar showError do utilitário
+import { showError } from '@/utils/toast';
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all" | "custom" | "7days" | "30days" | "60days" | "12months";
 
@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
         setLeads(data.filter(contact => contact.estado === 'Lead'));
       } catch (error) {
         console.error("Erro ao buscar contactos:", error);
-        showError("Erro ao carregar os dados dos contactos."); // Usar showError
+        showError("Erro ao carregar os dados dos contactos.");
       }
     };
 
@@ -395,7 +395,11 @@ const Dashboard: React.FC = () => {
               />
               <PieChartComponent contacts={currentPeriodContacts} />
             </div>
-            <LineChartComponent contacts={currentPeriodContacts} selectedPeriod={selectedPeriod} />
+            <LineChartComponent
+              allContacts={currentPeriodContacts}
+              allLeads={currentPeriodLeads}
+              selectedPeriod={selectedPeriod}
+            />
           </div>
           <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-1">
             <Card>
