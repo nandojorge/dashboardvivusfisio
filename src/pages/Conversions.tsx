@@ -30,6 +30,7 @@ import {
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker"; // Import DateRange
 
 import { LeadsByStatusPieChart } from "@/components/charts/LeadsByStatusPieChart";
 import { LeadsByServiceBarChart } from "@/components/charts/LeadsByServiceBarChart";
@@ -164,7 +165,7 @@ const Conversions = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("30days");
   const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+  const [dateRange, setDateRange] = useState<DateRange>({ // Use DateRange type
     from: subDays(new Date(), 29),
     to: new Date(),
   });
@@ -382,7 +383,7 @@ const Conversions = () => {
     setDateRange({ from: newFrom, to: newTo });
   };
 
-  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
+  const handleDateSelect = (range: DateRange | undefined) => { // Use DateRange type
     if (range?.from && range?.to) {
       setDateRange(range);
       setSelectedPeriod("custom");
@@ -494,7 +495,7 @@ const Conversions = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange.from ? dateRange : undefined} {/* Corrected: Pass undefined if 'from' is not set */}
+                selected={dateRange.from ? dateRange : undefined}
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}

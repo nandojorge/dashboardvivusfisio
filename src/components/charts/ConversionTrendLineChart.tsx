@@ -29,7 +29,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' = 0; // Changed type and default
+    let tickInterval: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' = 0;
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;
@@ -82,9 +82,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
 
     const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (spanInDays <= 7) {
-      dateFormat = 'EEE'; // Mon, Tue
-    } else if (spanInDays <= 60) {
+    if (spanInDays <= 60) {
       dateFormat = 'dd/MM'; // 01/01
     } else if (spanInDays <= 365 * 2) {
       dateFormat = 'MMM yy'; // Jan 23

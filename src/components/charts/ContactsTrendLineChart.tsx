@@ -29,7 +29,7 @@ const ContactsTrendLineChart: React.FC<ContactsTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' = 0; // Changed type and default
+    let tickInterval: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' = 0;
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;
