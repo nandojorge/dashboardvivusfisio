@@ -540,7 +540,7 @@ const Conversions = () => {
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
@@ -568,7 +568,7 @@ const Conversions = () => {
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
@@ -596,7 +596,7 @@ const Conversions = () => {
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
