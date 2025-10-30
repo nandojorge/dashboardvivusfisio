@@ -231,7 +231,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allCont
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Tendência de Registos</CardTitle>
+        <CardTitle>Contactos e Leads Recebidas</CardTitle>
       </CardHeader>
       <CardContent className="h-[350px] p-4">
         {chartData.length > 0 ? (
