@@ -176,7 +176,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
     <Card className="w-full lg:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{getChartTitle()}</CardTitle>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2"> {/* Adicionado flex-wrap aqui */}
           <Button
             variant={selectedChartType === "origin" ? "default" : "outline"}
             onClick={() => setSelectedChartType("origin")}
