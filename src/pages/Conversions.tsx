@@ -321,6 +321,73 @@ const Conversions = () => {
     };
   };
 
+  const handlePeriodChange = (period: FilterPeriod) => {
+    setSelectedPeriod(period);
+    const now = new Date();
+    let newFrom: Date | undefined;
+    let newTo: Date | undefined = now;
+
+    switch (period) {
+      case "today":
+        newFrom = subDays(now, 0);
+        break;
+      case "7days":
+        newFrom = subDays(now, 6);
+        break;
+      case "30days":
+        newFrom = subDays(now, 29);
+        break;
+      case "60days":
+        newFrom = subDays(now, 59);
+        break;
+      case "12months":
+        newFrom = subMonths(now, 11);
+        break;
+      case "week":
+        newFrom = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
+        break;
+      case "month":
+        newFrom = startOfMonth(now);
+        break;
+      case "year":
+        newFrom = startOfYear(now);
+        break;
+      case "all":
+        newFrom = undefined;
+        newTo = undefined;
+        break;
+      case "custom":
+        // Keep current custom range or set a default if none exists
+        if (!dateRange.from || !dateRange.to) {
+          newFrom = subDays(now, 29);
+          newTo = now;
+        } else {
+          newFrom = dateRange.from;
+          newTo = dateRange.to;
+        }
+        break;
+      default:
+        newFrom = subDays(now, 29);
+        break;
+    }
+
+    if (newFrom) newFrom.setHours(0, 0, 0, 0);
+    if (newTo) newTo.setHours(23, 59, 59, 999);
+
+    setDateRange({ from: newFrom, to: newTo });
+  };
+
+  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (range?.from && range?.to) {
+      setDateRange(range);
+      setSelectedPeriod("custom");
+    } else if (range?.from) {
+      setDateRange({ from: range.from, to: range.from });
+      setSelectedPeriod("custom");
+    }
+    setIsCalendarOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 p-4 md:p-6">
