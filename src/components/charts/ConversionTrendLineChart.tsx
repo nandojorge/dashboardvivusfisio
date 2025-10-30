@@ -29,7 +29,7 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
     let intervalStart: Date;
     let intervalEnd: Date;
     let dateFormat: string;
-    let tickInterval: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' = 0;
+    let tickInterval: 'preserveStart' | 'preserveEnd' | 'preserveStartEnd' | 'equidistant' | number = 'equidistant';
 
     if (period === "custom" && range?.from && range?.to) {
       intervalStart = range.from;
@@ -82,25 +82,14 @@ const ConversionTrendLineChart: React.FC<ConversionTrendLineChartProps> = ({
 
     const spanInDays = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (spanInDays <= 60) {
+    if (spanInDays <= 7) {
+      dateFormat = 'EEE'; // Mon, Tue
+    } else if (spanInDays <= 60) {
       dateFormat = 'dd/MM'; // 01/01
     } else if (spanInDays <= 365 * 2) {
       dateFormat = 'MMM yy'; // Jan 23
     } else {
       dateFormat = 'yyyy'; // 2023
-    }
-
-    // For 'all' period, adjust tickInterval based on span
-    if (period === "all") {
-      if (spanInDays <= 60) {
-        tickInterval = 0; // Daily
-      } else if (spanInDays <= 365 * 2) {
-        tickInterval = 'preserveStartEnd'; // Monthly
-      } else {
-        tickInterval = 'preserveStartEnd'; // Yearly
-      }
-    } else {
-      tickInterval = 0; // Default to show all ticks for other periods
     }
 
     return { intervalStart, intervalEnd, dateFormat, tickInterval };

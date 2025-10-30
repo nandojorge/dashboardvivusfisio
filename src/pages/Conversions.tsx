@@ -30,7 +30,6 @@ import {
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { DateRange } from "react-day-picker"; // Import DateRange
 
 import { LeadsByStatusPieChart } from "@/components/charts/LeadsByStatusPieChart";
 import { LeadsByServiceBarChart } from "@/components/charts/LeadsByServiceBarChart";
@@ -165,7 +164,7 @@ const Conversions = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("30days");
   const [isAdjustingComparisons, setIsAdjustingComparisons] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange>({ // Use DateRange type
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
@@ -292,39 +291,52 @@ const Conversions = () => {
     }
   };
 
-  // Helper function to get comparison text and color
-  const getComparisonText = (currentValue: number, previousValue: number, isPercentage: boolean = false) => {
-    if (previousValue === 0) {
-      if (currentValue > 0) {
-        return {
-          text: "↑ Inf. vs. período anterior",
-          colorClass: "text-green-500",
-        };
+  const getPreviousPeriodLabel = (period: FilterPeriod) => {
+    if (period === "all") return "N/A";
+    if (period === "custom") {
+      if (previousPeriodRange.from && previousPeriodRange.to) {
+        return `${format(previousPeriodRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
       }
-      return {
-        text: "0 vs. período anterior",
-        colorClass: "text-muted-foreground",
-      };
+      return "Período Anterior Personalizado";
     }
-
-    const diff = currentValue - previousValue;
-    const absDiff = Math.abs(diff);
-    const arrow = diff > 0 ? "↑" : (diff < 0 ? "↓" : "");
-    const colorClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-muted-foreground");
-
-    let formattedDiffText;
-    if (isPercentage) {
-        formattedDiffText = `${absDiff.toFixed(1)}%`;
-    } else {
-        formattedDiffText = absDiff.toFixed(0);
+    switch (period) {
+      case "today":
+        return "Ontem";
+      case "7days":
+        return "7 Dias Anteriores";
+      case "30days":
+        return "30 Dias Anteriores";
+      case "60days":
+        return "60 Dias Anteriores";
+      case "12months":
+        return "12 Meses Anteriores";
+      case "week":
+        return "Semana Anterior";
+      case "month":
+        return "Mês Anterior";
+      case "year":
+        return "Ano Anterior";
+      default:
+        return "";
     }
+  };
 
-    const text = diff === 0 ? "0 vs. período anterior" : `${arrow} ${formattedDiffText} vs. período anterior`;
+  const getTrendIcon = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
+    } else if (currentValue < previousValue) {
+      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
+    }
+    return null;
+  };
 
-    return {
-      text,
-      colorClass,
-    };
+  const getTrendTextColor = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return "text-green-500";
+    } else if (currentValue < previousValue) {
+      return "text-red-500";
+    }
+    return "text-muted-foreground";
   };
 
   const handlePeriodChange = (period: FilterPeriod) => {
@@ -383,7 +395,7 @@ const Conversions = () => {
     setDateRange({ from: newFrom, to: newTo });
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => { // Use DateRange type
+  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
     if (range?.from && range?.to) {
       setDateRange(range);
       setSelectedPeriod("custom");
@@ -495,7 +507,7 @@ const Conversions = () => {
                 initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
-                selected={dateRange.from ? dateRange : undefined}
+                selected={dateRange}
                 onSelect={handleDateSelect}
                 numberOfMonths={2}
                 locale={ptBR}
@@ -519,21 +531,16 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{totalLeadsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                {(() => {
-                  const { text, colorClass } = getComparisonText(totalLeadsCount, previousTotalLeadsCount);
-                  return (
-                    <>
-                      <span className={cn("ml-1", colorClass)}>
-                        {text}
-                      </span>
-                    </>
-                  );
-                })()}
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(totalLeadsCount, previousTotalLeadsCount))}>
+                  {previousTotalLeadsCount}
+                </span>
+                {getTrendIcon(totalLeadsCount, previousTotalLeadsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                Total acumulado
+                {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
           </CardContent>
@@ -552,21 +559,16 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{convertedLeadsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                {(() => {
-                  const { text, colorClass } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount);
-                  return (
-                    <>
-                      <span className={cn("ml-1", colorClass)}>
-                        {text}
-                      </span>
-                    </>
-                  );
-                })()}
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(convertedLeadsCount, previousConvertedLeadsCount))}>
+                  {previousConvertedLeadsCount}
+                </span>
+                {getTrendIcon(convertedLeadsCount, previousConvertedLeadsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                Total acumulado
+                {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
           </CardContent>
@@ -585,21 +587,16 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{conversionRate.toFixed(1)}%</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                {(() => {
-                  const { text, colorClass } = getComparisonText(conversionRate, previousConversionRate, true);
-                  return (
-                    <>
-                      <span className={cn("ml-1", colorClass)}>
-                        {text}
-                      </span>
-                    </>
-                  );
-                })()}
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(conversionRate, previousConversionRate))}>
+                  {previousConversionRate.toFixed(1)}%
+                </span>
+                {getTrendIcon(conversionRate, previousConversionRate)}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                Total acumulado
+                {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
           </CardContent>
