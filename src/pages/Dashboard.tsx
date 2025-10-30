@@ -489,7 +489,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{totalContactsCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Arquivados: <span className="font-bold">{archivedContactsCount}</span>
+              Não arquivados: <span className="font-bold">{activeContactsCount}</span>
             </p>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
