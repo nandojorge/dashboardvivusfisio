@@ -565,7 +565,7 @@ const Conversions = () => {
               </p>
             )}
             {selectedPeriod === "all" && (
-              <p className className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Total acumulado
               </p>
             )}
