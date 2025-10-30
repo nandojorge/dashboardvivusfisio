@@ -338,9 +338,9 @@ const Dashboard = () => {
 
   const getTrendIcon = (currentValue: number, previousValue: number) => {
     if (currentValue > previousValue) {
-      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
+      return <TrendingUp className="h-4 w-4 ml-1" />;
     } else if (currentValue < previousValue) {
-      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
+      return <TrendingDown className="h-4 w-4 ml-1" />;
     }
     return null;
   };
@@ -442,13 +442,11 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{totalContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className={cn("text-foreground", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
-                  {getPreviousPeriodLabel(selectedPeriod)}:
-                </span>
-                <span className={cn("ml-1", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1 flex items-center", getTrendTextColor(totalContactsCount, previousPeriodTotalContactsCount))}>
                   {previousPeriodTotalContactsCount}
+                  {getTrendIcon(totalContactsCount, previousPeriodTotalContactsCount)}
                 </span>
-                {getTrendIcon(totalContactsCount, previousPeriodTotalContactsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
@@ -472,13 +470,11 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{newContactsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className={cn("text-foreground", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
-                  {getPreviousPeriodLabel(selectedPeriod)}:
-                </span>
-                <span className={cn("ml-1", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1 flex items-center", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
                   {previousPeriodNewContactsCount}
+                  {getTrendIcon(newContactsCount, previousPeriodNewContactsCount)}
                 </span>
-                {getTrendIcon(newContactsCount, previousPeriodNewContactsCount)}
               </p>
             )}
             {selectedPeriod === "all" && (
