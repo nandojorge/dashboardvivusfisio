@@ -13,13 +13,13 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface LineChartComponentProps { // Renamed interface
+interface RegistrationTrendChartProps {
   allContacts: Contact[];
   allLeads: Contact[];
   selectedPeriod: "today" | "week" | "month" | "year" | "all" | "7days" | "30days" | "60days" | "12months";
 }
 
-const LineChartComponent: React.FC<LineChartComponentProps> = ({ allContacts, allLeads, selectedPeriod }) => { // Renamed component
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ allContacts, allLeads, selectedPeriod }) => {
 
   const getIntervalAndFormat = (period: string, now: Date) => {
     let intervalStart: Date;
@@ -285,4 +285,4 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({ allContacts, al
   );
 };
 
-export default LineChartComponent;
+export default RegistrationTrendChart;
