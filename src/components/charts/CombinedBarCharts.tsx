@@ -244,7 +244,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
               />
               <Bar dataKey="currentValue" fill="hsl(var(--primary))" radius={[4, 4, 4, 4]} />
               {selectedPeriod !== "all" && (
-                <Bar dataKey="previousValue" fill="hsl(var(--secondary))" radius={[4, 4, 4, 4]} />
+                <Bar dataKey="previousValue" fill="hsl(var(--secondary-darker))" radius={[4, 4, 4, 4]} />
               )}
             </BarChart>
           </ResponsiveContainer>
