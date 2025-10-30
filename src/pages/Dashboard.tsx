@@ -15,7 +15,7 @@ import { PieChartComponent } from '@/components/charts/PieChartComponent';
 import { LineChartComponent } from '@/components/charts/LineChartComponent';
 import { DataTable } from '@/components/data-table/data-table';
 import { columns } from '@/components/data-table/columns';
-import { toast } from 'react-hot-toast';
+import { showError } from '@/utils/toast'; // Importar showError do utilitário
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all" | "custom" | "7days" | "30days" | "60days" | "12months";
 
@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
         setLeads(data.filter(contact => contact.estado === 'Lead'));
       } catch (error) {
         console.error("Erro ao buscar contactos:", error);
-        toast.error("Erro ao carregar os dados dos contactos.");
+        showError("Erro ao carregar os dados dos contactos."); // Usar showError
       }
     };
 
