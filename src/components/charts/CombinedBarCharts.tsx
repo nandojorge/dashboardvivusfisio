@@ -222,7 +222,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 width={100}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
-                tick={{ textAnchor: 'start' }} {/* Adicionado para alinhar à esquerda */}
+                tick={{ textAnchor: 'start' }}
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
