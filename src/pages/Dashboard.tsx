@@ -15,7 +15,7 @@ import {
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
   isWithinInterval,
   format, setDate, getDayOfYear, setDayOfYear, getDay, getDate,
-  isBefore, isSameDay, addDays
+  isBefore, isSameDay, addDays, getDaysInMonth
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress"; // Importar o componente Progress
 
 type FilterPeriod = "today" | "7days" | "30days" | "60days" | "12months" | "week" | "month" | "year" | "all";
 
@@ -142,6 +143,35 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
       return true;
     default:
       return false;
+  }
+};
+
+// Helper function to get the target value for a given period
+const getTargetValueForPeriod = (period: FilterPeriod): number | null => {
+  const dailyTarget = 5;
+  const now = new Date();
+
+  switch (period) {
+    case "today":
+      return dailyTarget;
+    case "7days":
+      return dailyTarget * 7;
+    case "30days":
+      return dailyTarget * 30;
+    case "60days":
+      return dailyTarget * 60;
+    case "12months":
+      return dailyTarget * 365; // Approximation for 12 months
+    case "week":
+      return dailyTarget * 7;
+    case "month":
+      return dailyTarget * getDaysInMonth(now);
+    case "year":
+      return dailyTarget * 365; // Approximation for a year
+    case "all":
+      return null; // No specific target for "all time"
+    default:
+      return null;
   }
 };
 
@@ -354,6 +384,15 @@ const Dashboard = () => {
     return "text-muted-foreground";
   };
 
+  // Calculate target and progress for "Total de Contactos"
+  const contactsTarget = getTargetValueForPeriod(selectedPeriod);
+  const contactsProgress = contactsTarget !== null
+    ? Math.min((totalContactsCount / contactsTarget) * 100, 100)
+    : 0;
+  const contactsRemaining = contactsTarget !== null
+    ? Math.max(contactsTarget - totalContactsCount, 0)
+    : 0;
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -455,6 +494,17 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
+            )}
+
+            {contactsTarget !== null && selectedPeriod !== "all" && (
+              <div className="mt-4">
+                <Progress value={contactsProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {contactsRemaining > 0
+                    ? `${contactsRemaining} para o objetivo de ${contactsTarget}`
+                    : `Objetivo de ${contactsTarget} alcançado!`}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
