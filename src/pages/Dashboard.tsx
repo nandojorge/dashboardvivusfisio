@@ -507,17 +507,6 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-
-            {contactsTarget !== null && selectedPeriod !== "all" && (
-              <div className="mt-4">
-                <Progress value={contactsProgress} className={cn("h-2", progressBarColorClass)} />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {contactsRemaining > 0
-                    ? `${contactsRemaining} para o objetivo de ${contactsTarget}`
-                    : `Objetivo de ${contactsTarget} alcançado!`}
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -551,6 +540,24 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {contactsTarget !== null && selectedPeriod !== "all" && (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Progresso do Objetivo de Contactos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Progress value={contactsProgress} className={cn("h-2", progressBarColorClass)} />
+            <p className="text-xs text-muted-foreground mt-1">
+              {contactsRemaining > 0
+                ? `${contactsRemaining} para o objetivo de ${contactsTarget}`
+                : `Objetivo de ${contactsTarget} alcançado!`}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CombinedBarCharts
