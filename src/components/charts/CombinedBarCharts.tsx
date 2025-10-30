@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'; // Removido LabelList e Legend, pois não são usados diretamente no JSX do BarChart com este estilo
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Contact } from '@/types/contact';
@@ -229,7 +229,7 @@ const CombinedBarCharts: React.FC<CombinedBarChartsProps> = ({
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
-                className="text-xs" {/* Alterado de text-sm para text-xs */}
+                className="text-xs"
                 width={80}
                 interval={0}
                 tickFormatter={capitalizeFirstLetter}
