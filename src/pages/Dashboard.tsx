@@ -400,7 +400,7 @@ const Dashboard = () => {
   // Determine the color of the progress bar
   const progressBarColorClass = contactsTarget !== null && totalContactsCount >= contactsTarget
     ? "bg-green-500"
-    : "bg-gray-400"; // Alterado de cinzento escuro para cinzento mais claro
+    : "bg-gray-400";
 
   if (isLoading) {
     return (
@@ -521,6 +521,9 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{newContactsCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Em contacto: <span className="font-bold">{leadsInContactCount}</span>
+            </p>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 <span className={cn("text-foreground", getTrendTextColor(newContactsCount, previousPeriodNewContactsCount))}>
