@@ -291,119 +291,34 @@ const Conversions = () => {
     }
   };
 
-  const getPreviousPeriodLabel = (period: FilterPeriod) => {
-    if (period === "all") return "N/A";
-    if (period === "custom") {
-      if (previousPeriodRange.from && previousPeriodRange.to) {
-        return `${format(previousPeriodRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(previousPeriodRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
+  // Helper function to get comparison text, icon, and color
+  const getComparisonText = (currentValue: number, previousValue: number, isPercentage: boolean = false) => {
+    if (previousValue === 0) {
+      if (currentValue > 0) {
+        return {
+          text: "↑ Inf. vs. período anterior",
+          colorClass: "text-green-500",
+          icon: <TrendingUp className="h-4 w-4 text-green-500 ml-1" />,
+        };
       }
-      return "Período Anterior Personalizado";
-    }
-    switch (period) {
-      case "today":
-        return "Ontem";
-      case "7days":
-        return "7 Dias Anteriores";
-      case "30days":
-        return "30 Dias Anteriores";
-      case "60days":
-        return "60 Dias Anteriores";
-      case "12months":
-        return "12 Meses Anteriores";
-      case "week":
-        return "Semana Anterior";
-      case "month":
-        return "Mês Anterior";
-      case "year":
-        return "Ano Anterior";
-      default:
-        return "";
-    }
-  };
-
-  const getTrendIcon = (currentValue: number, previousValue: number) => {
-    if (currentValue > previousValue) {
-      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
-    } else if (currentValue < previousValue) {
-      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
-    }
-    return null;
-  };
-
-  const getTrendTextColor = (currentValue: number, previousValue: number) => {
-    if (currentValue > previousValue) {
-      return "text-green-500";
-    } else if (currentValue < previousValue) {
-      return "text-red-500";
-    }
-    return "text-muted-foreground";
-  };
-
-  const handlePeriodChange = (period: FilterPeriod) => {
-    setSelectedPeriod(period);
-    const now = new Date();
-    let newFrom: Date | undefined;
-    let newTo: Date | undefined = now;
-
-    switch (period) {
-      case "today":
-        newFrom = subDays(now, 0);
-        break;
-      case "7days":
-        newFrom = subDays(now, 6);
-        break;
-      case "30days":
-        newFrom = subDays(now, 29);
-        break;
-      case "60days":
-        newFrom = subDays(now, 59);
-        break;
-      case "12months":
-        newFrom = subMonths(now, 11);
-        break;
-      case "week":
-        newFrom = startOfWeek(now, { weekStartsOn: 0, locale: ptBR });
-        break;
-      case "month":
-        newFrom = startOfMonth(now);
-        break;
-      case "year":
-        newFrom = startOfYear(now);
-        break;
-      case "all":
-        newFrom = undefined;
-        newTo = undefined;
-        break;
-      case "custom":
-        // Keep current custom range or set a default if none exists
-        if (!dateRange.from || !dateRange.to) {
-          newFrom = subDays(now, 29);
-          newTo = now;
-        } else {
-          newFrom = dateRange.from;
-          newTo = dateRange.to;
-        }
-        break;
-      default:
-        newFrom = subDays(now, 29);
-        break;
+      return {
+        text: "0% vs. período anterior",
+        colorClass: "text-muted-foreground",
+        icon: null,
+      };
     }
 
-    if (newFrom) newFrom.setHours(0, 0, 0, 0);
-    if (newTo) newTo.setHours(23, 59, 59, 999);
+    const diff = currentValue - previousValue;
+    const percentage = (Math.abs(diff) / previousValue) * 100;
+    const arrow = diff > 0 ? "↑" : "↓";
+    const colorClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-muted-foreground");
+    const icon = diff > 0 ? <TrendingUp className="h-4 w-4 text-green-500 ml-1" /> : (diff < 0 ? <TrendingDown className="h-4 w-4 text-red-500 ml-1" /> : null);
 
-    setDateRange({ from: newFrom, to: newTo });
-  };
-
-  const handleDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
-    if (range?.from && range?.to) {
-      setDateRange(range);
-      setSelectedPeriod("custom");
-    } else if (range?.from) {
-      setDateRange({ from: range.from, to: range.from });
-      setSelectedPeriod("custom");
-    }
-    setIsCalendarOpen(false);
+    return {
+      text: `${arrow} ${percentage.toFixed(1)}% vs. período anterior`,
+      colorClass,
+      icon,
+    };
   };
 
   if (isLoading) {
@@ -531,16 +446,22 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{totalLeadsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(totalLeadsCount, previousTotalLeadsCount))}>
-                  {previousTotalLeadsCount}
-                </span>
-                {getTrendIcon(totalLeadsCount, previousTotalLeadsCount)}
+                {(() => {
+                  const { text, colorClass, icon } = getComparisonText(totalLeadsCount, previousTotalLeadsCount);
+                  return (
+                    <>
+                      <span className={cn("ml-1", colorClass)}>
+                        {text}
+                      </span>
+                      {icon}
+                    </>
+                  );
+                })()}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
@@ -559,16 +480,22 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{convertedLeadsCount}</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(convertedLeadsCount, previousConvertedLeadsCount))}>
-                  {previousConvertedLeadsCount}
-                </span>
-                {getTrendIcon(convertedLeadsCount, previousConvertedLeadsCount)}
+                {(() => {
+                  const { text, colorClass, icon } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount);
+                  return (
+                    <>
+                      <span className={cn("ml-1", colorClass)}>
+                        {text}
+                      </span>
+                      {icon}
+                    </>
+                  );
+                })()}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
@@ -587,16 +514,22 @@ const Conversions = () => {
             <div className="text-2xl font-bold">{conversionRate.toFixed(1)}%</div>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(conversionRate, previousConversionRate))}>
-                  {previousConversionRate.toFixed(1)}%
-                </span>
-                {getTrendIcon(conversionRate, previousConversionRate)}
+                {(() => {
+                  const { text, colorClass, icon } = getComparisonText(conversionRate, previousConversionRate);
+                  return (
+                    <>
+                      <span className={cn("ml-1", colorClass)}>
+                        {text}
+                      </span>
+                      {icon}
+                    </>
+                  );
+                })()}
               </p>
             )}
             {selectedPeriod === "all" && (
               <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
+                Total acumulado
               </p>
             )}
           </CardContent>
