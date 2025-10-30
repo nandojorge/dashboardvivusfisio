@@ -291,33 +291,38 @@ const Conversions = () => {
     }
   };
 
-  // Helper function to get comparison text, icon, and color
+  // Helper function to get comparison text and color
   const getComparisonText = (currentValue: number, previousValue: number, isPercentage: boolean = false) => {
     if (previousValue === 0) {
       if (currentValue > 0) {
         return {
           text: "↑ Inf. vs. período anterior",
           colorClass: "text-green-500",
-          icon: <TrendingUp className="h-4 w-4 text-green-500 ml-1" />,
         };
       }
       return {
-        text: "0% vs. período anterior",
+        text: "0 vs. período anterior",
         colorClass: "text-muted-foreground",
-        icon: null,
       };
     }
 
     const diff = currentValue - previousValue;
-    const percentage = (Math.abs(diff) / previousValue) * 100;
-    const arrow = diff > 0 ? "↑" : "↓";
+    const absDiff = Math.abs(diff);
+    const arrow = diff > 0 ? "↑" : (diff < 0 ? "↓" : "");
     const colorClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-muted-foreground");
-    const icon = diff > 0 ? <TrendingUp className="h-4 w-4 text-green-500 ml-1" /> : (diff < 0 ? <TrendingDown className="h-4 w-4 text-red-500 ml-1" /> : null);
+
+    let formattedDiffText;
+    if (isPercentage) {
+        formattedDiffText = `${absDiff.toFixed(1)}%`;
+    } else {
+        formattedDiffText = absDiff.toFixed(0);
+    }
+
+    const text = diff === 0 ? "0 vs. período anterior" : `${arrow} ${formattedDiffText} vs. período anterior`;
 
     return {
-      text: `${arrow} ${percentage.toFixed(1)}% vs. período anterior`,
+      text,
       colorClass,
-      icon,
     };
   };
 
@@ -514,13 +519,12 @@ const Conversions = () => {
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 {(() => {
-                  const { text, colorClass, icon } = getComparisonText(totalLeadsCount, previousTotalLeadsCount);
+                  const { text, colorClass } = getComparisonText(totalLeadsCount, previousTotalLeadsCount, false);
                   return (
                     <>
                       <span className={cn("ml-1", colorClass)}>
                         {text}
                       </span>
-                      {icon}
                     </>
                   );
                 })()}
@@ -548,13 +552,12 @@ const Conversions = () => {
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 {(() => {
-                  const { text, colorClass, icon } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount);
+                  const { text, colorClass } = getComparisonText(convertedLeadsCount, previousConvertedLeadsCount, false);
                   return (
                     <>
                       <span className={cn("ml-1", colorClass)}>
                         {text}
                       </span>
-                      {icon}
                     </>
                   );
                 })()}
@@ -582,13 +585,12 @@ const Conversions = () => {
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 {(() => {
-                  const { text, colorClass, icon } = getComparisonText(conversionRate, previousConversionRate);
+                  const { text, colorClass } = getComparisonText(conversionRate, previousConversionRate, true);
                   return (
                     <>
                       <span className={cn("ml-1", colorClass)}>
                         {text}
                       </span>
-                      {icon}
                     </>
                   );
                 })()}
